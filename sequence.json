@@ -1,0 +1,52 @@
+[
+    {
+        "fuel": 0,
+        "oxidizer": 0,
+        "timestamp": -1000000
+    },
+    {
+        "fuel": 0,
+        "oxidizer": 0,
+        "timestamp": 0.0
+    },
+    {
+        "fuel": 0,
+        "oxidizer": 7,
+        "timestamp": 0.2
+    },
+    {
+        "fuel": 0,
+        "oxidizer": 7,
+        "timestamp": 0.5
+    },
+    {
+        "fuel": 9,
+        "oxidizer": 7,
+        "timestamp": 1.0
+    },
+    {
+        "fuel": 9,
+        "oxidizer": 7,
+        "timestamp": 2.0
+    },
+    {
+        "fuel": 90,
+        "oxidizer": 70,
+        "timestamp": 4.0
+    },
+    {
+        "fuel": 90,
+        "oxidizer": 70,
+        "timestamp": 9.0
+    },
+    {
+        "fuel": 0,
+        "oxidizer": 0,
+        "timestamp": 10.0
+    },
+    {
+        "fuel": 0,
+        "oxidizer": 0,
+        "timestamp": 1000000
+    }
+]
