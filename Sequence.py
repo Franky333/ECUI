@@ -89,12 +89,12 @@ class Sequence(object):
 
 	def saveSequence(self):
 		print("saving sequence to file")
-		with open('sequence.json', 'w') as f:
+		with open('config/sequence.json', 'w') as f:
 			json.dump(self.sequence, f, sort_keys=True, indent=4, ensure_ascii=False)
 
 	def loadSequence(self):
 		print("loading sequence from file")
-		with open('sequence.json', 'r') as f:
+		with open('config/sequence.json', 'r') as f:
 			self.sequence = json.load(f)
 
 	def setStatus(self, status):

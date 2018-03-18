@@ -46,10 +46,10 @@ class Servo(object):
 
 	def saveSettings(self):
 		print("saving settings for servo \"" + self.name + "\" to file")
-		with open('servo_' + self.name + '.json', 'w') as f:
+		with open('config/servo_' + self.name + '.json', 'w') as f:
 			json.dump((self.min_us, self.max_us), f, sort_keys=True, indent=4, ensure_ascii=False)
 
 	def loadSettings(self):
 		print("loading settings for servo \"" + self.name + "\" from file")
-		with open('servo_' + self.name + '.json', 'r') as f:
+		with open('config/servo_' + self.name + '.json', 'r') as f:
 			(self.min_us, self.max_us) = json.load(f)
