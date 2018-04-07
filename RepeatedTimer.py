@@ -14,6 +14,7 @@ class RepeatedTimer(object):
 
 	def _run(self):
 		self.next_call += self.interval
+		self._timer.cancel()  # TODO: does this help on rpi?
 		self._timer = threading.Timer(self.next_call - time.time(), self._run)
 		self._timer.start()
 		self.callback(*self.args, **self.kwargs)

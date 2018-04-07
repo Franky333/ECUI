@@ -1,22 +1,30 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import *
 
 from CountdownTimer import CountdownTimer
+from Relay import Relay
 from Sequence import Sequence
 from SequencePlot import SequencePlot
 from Servo import Servo
+
+from hedgehog.client import connect
+from contextlib import ExitStack
 
 
 class ECUI(QWidget):
 	def __init__(self, parent=None):
 		super(ECUI, self).__init__(parent)
 
+		self.stack = ExitStack()
+		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))
+
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
 		self.sequence = Sequence()
-		self.servo_fuel = Servo('fuel')
-		self.servo_oxidizer = Servo('oxidizer')
+		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
+		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
+		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')
 
 		# Main tab
 		self.tab_main = QWidget()
@@ -141,6 +149,7 @@ class ECUI(QWidget):
 			event.ignore()
 
 	def cleanup(self):
+		self.stack.close()
 		self.countdownTimer.stop()
 		self.sequence.saveSequence()
 		self.servo_fuel.saveSettings()
@@ -179,6 +188,7 @@ class ECUI(QWidget):
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
+		self.relay_igniter.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
 	def calibrationEnable(self):
@@ -216,7 +226,7 @@ class ECUI(QWidget):
 
 	def calOxidizerValueChanged(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_oxidizer.setPositionUs(self.spinbox_cal_oxidizerl.value())
+			self.servo_oxidizer.setPositionUs(self.spinbox_cal_oxidizer.value())
 
 	def calFuelSetMin(self):
 		if self.checkbox_calibration.isChecked():
@@ -231,12 +241,12 @@ class ECUI(QWidget):
 	def calOxidizerSetMin(self):
 		if self.checkbox_calibration.isChecked():
 			self.servo_oxidizer.setMinUs(self.spinbox_cal_oxidizer.value())
-			self.label_cal_fuel.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
+			self.label_cal_oxidizer.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
 
 	def calOxidizerSetMax(self):
 		if self.checkbox_calibration.isChecked():
 			self.servo_oxidizer.setMaxUs(self.spinbox_cal_oxidizer.value())
-			self.label_cal_fuel.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
+			self.label_cal_oxidizer.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
 
 
 if __name__ == '__main__':

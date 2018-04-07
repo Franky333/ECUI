@@ -4,25 +4,15 @@ import json
 class Sequence(object):
 	def __init__(self):
 		self.sequence = []
-
-		# self.sequence += [{'timestamp': 0.0, 'fuel': 0, 'oxidizer': 0}]
-		# self.sequence += [{'timestamp': 0.1, 'fuel': 0, 'oxidizer': 7}]
-		# self.sequence += [{'timestamp': 0.5, 'fuel': 0, 'oxidizer': 7}]
-		# self.sequence += [{'timestamp': 0.6, 'fuel': 9, 'oxidizer': 7}]
-		# self.sequence += [{'timestamp': 2.0, 'fuel': 9, 'oxidizer': 7}]
-		# self.sequence += [{'timestamp': 4.0, 'fuel': 90, 'oxidizer': 70}]
-		# self.sequence += [{'timestamp': 9.0, 'fuel': 90, 'oxidizer': 70}]
-		# self.sequence += [{'timestamp': 10.0, 'fuel': 0, 'oxidizer': 0}]
-
 		self.loadSequence()
 
 		# add endpoints and sort
 		self.sequence = sorted(self.sequence, key=lambda k: k['timestamp'])
 		if not self.sequence[0]['timestamp'] == -1000000:
-			self.sequence += [{'timestamp': -1000000, 'fuel': 0, 'oxidizer': 0}]
+			self.sequence += [{'timestamp': -1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0}]
 			print("added start endpoint to sequence")
 		if not self.sequence[self.sequence.__len__() - 1]['timestamp'] == 1000000:
-			self.sequence += [{'timestamp': 1000000, 'fuel': 0, 'oxidizer': 0}]
+			self.sequence += [{'timestamp': 1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0}]
 			print("added end endpoint to sequence")
 		self.sequence = sorted(self.sequence, key=lambda k: k['timestamp'])
 
@@ -42,6 +32,9 @@ class Sequence(object):
 
 	def getOxidizerList(self):
 		return self.__getListFromKey('oxidizer')
+
+	def getIgniterList(self):
+		return self.__getListFromKey('igniter')
 
 	def getIndexTimeBelowOrEqual(self, time):
 		timestamps = self.getTimestampList()
@@ -80,6 +73,19 @@ class Sequence(object):
 			return oxidizer[index_belowOrEqual]
 		slope = ((oxidizer[index_above] - oxidizer[index_belowOrEqual]) / (timestamps[index_above] - timestamps[index_belowOrEqual]))
 		return oxidizer[index_belowOrEqual] + slope * (time - timestamps[index_belowOrEqual])
+
+	def getIgniterAtTime(self, time):
+		if self.status == 'abort':
+			return 0
+		index_belowOrEqual = self.getIndexTimeBelowOrEqual(time)
+		index_above = self.getIndexTimeAbove(time)
+		timestamps = self.getTimestampList()
+		igniter = self.getIgniterList()
+
+		if timestamps[index_belowOrEqual] == time:
+			return igniter[index_belowOrEqual]
+		slope = ((igniter[index_above] - igniter[index_belowOrEqual]) / (timestamps[index_above] - timestamps[index_belowOrEqual]))
+		return igniter[index_belowOrEqual] + slope * (time - timestamps[index_belowOrEqual])
 
 	def getSmallestTimestamp(self):
 		return self.getTimestampList()[1]

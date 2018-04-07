@@ -2,7 +2,9 @@ import json
 
 
 class Servo(object):
-	def __init__(self, name):
+	def __init__(self, hedgehog, port, name):
+		self.hedgehog = hedgehog
+		self.port = port
 		self.name = name
 		self.position_percent = None
 		self.position_us = None
@@ -25,7 +27,7 @@ class Servo(object):
 		if not position_us == self.position_us:
 			self.position_us = position_us
 			print("servo %s set to %dus" % (self.name, self.position_us))
-			# TODO: set servo
+			self.hedgehog.set_servo(self.port, True, position_us*2-2000)  # TODO: use other function to set actual us
 
 	def getPositionUs(self):
 		return self.position_us
