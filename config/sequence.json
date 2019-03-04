@@ -12,16 +12,40 @@
         "timestamp": 0.0
     },
     {
-        "fuel": 100,
+        "fuel": 0,
         "igniter": 100,
         "oxidizer": 0,
         "timestamp": 0.1
     },
     {
-        "fuel": 100,
+        "fuel": 0,
         "igniter": 100,
         "oxidizer": 0,
-        "timestamp": 5.0
+        "timestamp": 0.2
+    },
+    {
+        "fuel": 90,
+        "igniter": 100,
+        "oxidizer": 80,
+        "timestamp": 2.0
+    },
+    {
+        "fuel": 90,
+        "igniter": 100,
+        "oxidizer": 80,
+        "timestamp": 2.1
+    },
+    {
+        "fuel": 90,
+        "igniter": 0,
+        "oxidizer": 80,
+        "timestamp": 2.2
+    },
+    {
+        "fuel": 90,
+        "igniter": 0,
+        "oxidizer": 80,
+        "timestamp": 5
     },
     {
         "fuel": 0,
