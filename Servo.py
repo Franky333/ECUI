@@ -27,7 +27,7 @@ class Servo(object):
 		if not position_us == self.position_us:
 			self.position_us = position_us
 			print("servo %s set to %dus" % (self.name, self.position_us))
-			self.hedgehog.set_servo(self.port, True, position_us*2-2000)  # TODO: use other function to set actual us
+			self.hedgehog.set_servo_raw(self.port, position_us*2)
 
 	def getPositionUs(self):
 		return self.position_us

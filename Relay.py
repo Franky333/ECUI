@@ -11,11 +11,11 @@ class Relay(object):
 		if enabled and not self.enabled:
 			self.enabled = True
 			print("relay %s enabled" % self.name)
-			self.hedgehog.move(self.port, 1000)
+			self.hedgehog.move_motor(self.port, 1000)
 		if not enabled and self.enabled:
 			self.enabled = False
 			print("relay %s disabled" % self.name)
-			self.hedgehog.move(self.port, 0)
+			self.hedgehog.motor_off(self.port)
 
 	def get(self):
 		return self.enabled
