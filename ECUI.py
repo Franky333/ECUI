@@ -1,6 +1,10 @@
-#!/usr/bin/python3.6
+#!/usr/local/bin/python3.7
 
-from PyQt5.QtGui import QIcon
+from hedgehog.client import connect
+from contextlib import ExitStack
+
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from CountdownTimer import CountdownTimer
@@ -8,9 +12,6 @@ from Relay import Relay
 from Sequence import Sequence
 from SequencePlot import SequencePlot
 from Servo import Servo
-
-from hedgehog.client import connect
-from contextlib import ExitStack
 
 
 class ECUI(QWidget):
@@ -49,6 +50,49 @@ class ECUI(QWidget):
 
 		self.sequencePlot = SequencePlot(self, sequence=self.sequence, countdownTimer=self.countdownTimer, width=5, height=4)
 		self.tab_main.layout.addWidget(self.sequencePlot)
+
+		self.checkbox_manualControl = QCheckBox("Manual Control", self)
+		self.checkbox_manualControl.setToolTip("Enable Manual Control")
+		self.checkbox_manualControl.clicked.connect(self.manualControlEnableDisable)
+		self.checkbox_manualControl.resize(self.checkbox_manualControl.sizeHint())
+
+		self.checkbox_manualControlIgniter = QCheckBox("Igniter", self)
+		self.checkbox_manualControlIgniter.setToolTip("Igniter Manual Control")
+		self.checkbox_manualControlIgniter.clicked.connect(self.manualControlIgniterEnableDisable)
+		self.checkbox_manualControlIgniter.resize(self.checkbox_manualControlIgniter.sizeHint())
+		self.checkbox_manualControlIgniter.setEnabled(False)
+
+		self.label_manualControlFuel = QLabel("Fuel: %d" % self.servo_fuel.getPositionPercent(), self)
+		self.slider_manualControlFuel = QSlider(Qt.Horizontal)
+		self.slider_manualControlFuel.setToolTip("Fuel Manual Control")
+		self.slider_manualControlFuel.setMinimum(0)
+		self.slider_manualControlFuel.setMaximum(100)
+		self.slider_manualControlFuel.sliderMoved.connect(self.manualControlFuelChange)
+		self.slider_manualControlFuel.resize(self.slider_manualControlFuel.sizeHint())
+		self.slider_manualControlFuel.setEnabled(False)
+		self.layout_manualControlFuel = QVBoxLayout()
+		self.layout_manualControlFuel.addWidget(self.label_manualControlFuel)
+		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel)
+
+		self.label_manualControlOxidizer = QLabel("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent(), self)
+		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)
+		self.slider_manualControlOxidizer.setToolTip("Oxidizer Manual Control")
+		self.slider_manualControlOxidizer.setMinimum(0)
+		self.slider_manualControlOxidizer.setMaximum(100)
+		self.slider_manualControlOxidizer.sliderMoved.connect(self.manualControlOxidizerChange)
+		self.slider_manualControlOxidizer.resize(self.slider_manualControlOxidizer.sizeHint())
+		self.slider_manualControlOxidizer.setEnabled(False)
+		self.layout_manualControlOxidizer = QVBoxLayout()
+		self.layout_manualControlOxidizer.addWidget(self.label_manualControlOxidizer)
+		self.layout_manualControlOxidizer.addWidget(self.slider_manualControlOxidizer)
+
+		self.layout_manualControl = QVBoxLayout()
+		self.layout_manualControl.addWidget(self.checkbox_manualControl)
+		self.layout_manualControl.addWidget(self.checkbox_manualControlIgniter)
+		self.layout_manualControl.addLayout(self.layout_manualControlFuel)
+		self.layout_manualControl.addLayout(self.layout_manualControlOxidizer)
+
+		self.tab_main.layout.addLayout(self.layout_manualControl)
 
 		# Settings tab
 		self.tab_settings = QWidget()
@@ -159,6 +203,8 @@ class ECUI(QWidget):
 		if self.btn_countdownStartStop.text() == "Start":
 			self.checkbox_calibration.setEnabled(False)
 			self.calibrationDisable()
+			self.checkbox_manualControl.setEnabled(False)
+			self.manualControlDisable()
 			self.countdownTimer.start()
 			self.sequence.setStatus('running')
 			self.btn_countdownStartStop.setText("Abort")
@@ -174,6 +220,7 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 		elif self.btn_countdownStartStop.text() == "Reset":
 			self.checkbox_calibration.setEnabled(True)
+			self.checkbox_manualControl.setEnabled(True)
 			self.countdownTimer.reset()
 			self.sequence.setStatus('reset')
 			self.countdownEvent()
@@ -189,11 +236,69 @@ class ECUI(QWidget):
 		self.servo_fuel.setPositionPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.relay_igniter.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.label_manualControlFuel.setText("Fuel: %d%%" % self.servo_fuel.getPositionPercent())
+		self.label_manualControlOxidizer.setText("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent())
+		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
+		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
+
+	def manualControlEnable(self):
+		print("Manual Control Enabled")
+		self.checkbox_manualControl.setChecked(True)
+		self.btn_countdownStartStop.setEnabled(False)  # FIXME: doesn't do anything?!
+		self.checkbox_calibration.setEnabled(False)
+		self.calibrationDisable()
+		self.checkbox_manualControlIgniter.setEnabled(True)
+		self.slider_manualControlFuel.setEnabled(True)
+		self.slider_manualControlOxidizer.setEnabled(True)
+
+	def manualControlDisable(self):
+		print("Manual Control Disabled")
+		self.checkbox_manualControl.setChecked(False)
+		self.btn_countdownStartStop.setEnabled(True)
+		self.checkbox_calibration.setEnabled(True)
+		self.checkbox_manualControlIgniter.setEnabled(False)
+		self.checkbox_manualControlIgniter.setChecked(False)
+		self.manualControlIgniterDisable()
+		self.slider_manualControlFuel.setEnabled(False)
+		self.slider_manualControlOxidizer.setEnabled(False)
+
+	def manualControlEnableDisable(self):  # TODO: rename to checkbox_manualControl_onClick, same for other callbacks
+		if self.checkbox_manualControl.isChecked():
+			self.manualControlEnable()
+		else:
+			self.manualControlDisable()
+
+	def manualControlIgniterEnable(self):
+		print("Manual Igniter ON")
+		self.relay_igniter.set(True)
+
+	def manualControlIgniterDisable(self):
+		print("Manual Igniter OFF")
+		self.relay_igniter.set(False)
+
+	def manualControlIgniterEnableDisable(self):
+		if self.checkbox_manualControlIgniter.isChecked():
+			self.manualControlIgniterEnable()
+		else:
+			self.manualControlIgniterDisable()
+
+	def manualControlFuelChange(self):
+		print("Manuel Fuel Changed")
+		self.servo_fuel.setPositionPercent(self.slider_manualControlFuel.value())
+		self.label_manualControlFuel.setText("Fuel: %d%%" % self.servo_fuel.getPositionPercent())
+
+	def manualControlOxidizerChange(self):
+		print("Manuel Oxidizer Changed")
+		self.servo_oxidizer.setPositionPercent(self.slider_manualControlOxidizer.value())
+		self.label_manualControlOxidizer.setText("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent())
 
 	def calibrationEnable(self):
 		print("Calibration Mode Enabled")
 		self.btn_countdownStartStop.setEnabled(False)
+		self.checkbox_manualControl.setEnabled(False)
+		self.manualControlDisable()
 		self.checkbox_calibration.setChecked(True)
 		self.spinbox_cal_fuel.setEnabled(True)
 		self.spinbox_cal_oxidizer.setEnabled(True)
@@ -205,6 +310,7 @@ class ECUI(QWidget):
 	def calibrationDisable(self):
 		print("Calibration Mode Disabled")
 		self.btn_countdownStartStop.setEnabled(True)
+		self.checkbox_manualControl.setEnabled(True)
 		self.checkbox_calibration.setChecked(False)
 		self.spinbox_cal_fuel.setEnabled(False)
 		self.spinbox_cal_oxidizer.setEnabled(False)
