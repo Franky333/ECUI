@@ -1,4 +1,6 @@
 #!/usr/local/bin/python3.7
+import csv
+import datetime
 
 from hedgehog.client import connect
 from contextlib import ExitStack
@@ -26,6 +28,8 @@ class ECUI(QWidget):
 		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
 		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
 		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')
+
+		self.loggingvalues = []
 
 		# Main tab
 		self.tab_main = QWidget()
@@ -63,10 +67,9 @@ class ECUI(QWidget):
 		self.checkbox_manualControlIgniter.setEnabled(False)
 
 		self.label_manualControlFuel = QLabel("Fuel: %d" % self.servo_fuel.getPositionPercent(), self)
-		self.slider_manualControlFuel = QSlider(Qt.Horizontal)
+		self.slider_manualControlFuel = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlFuel.setToolTip("Fuel Manual Control")
-		self.slider_manualControlFuel.setMinimum(0)
-		self.slider_manualControlFuel.setMaximum(100)
+		self.slider_manualControlFuel.setRange(0, 100)
 		self.slider_manualControlFuel.sliderMoved.connect(self.manualControlFuelChange)
 		self.slider_manualControlFuel.resize(self.slider_manualControlFuel.sizeHint())
 		self.slider_manualControlFuel.setEnabled(False)
@@ -75,10 +78,9 @@ class ECUI(QWidget):
 		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel)
 
 		self.label_manualControlOxidizer = QLabel("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent(), self)
-		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)
+		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlOxidizer.setToolTip("Oxidizer Manual Control")
-		self.slider_manualControlOxidizer.setMinimum(0)
-		self.slider_manualControlOxidizer.setMaximum(100)
+		self.slider_manualControlOxidizer.setRange(0, 100)
 		self.slider_manualControlOxidizer.sliderMoved.connect(self.manualControlOxidizerChange)
 		self.slider_manualControlOxidizer.resize(self.slider_manualControlOxidizer.sizeHint())
 		self.slider_manualControlOxidizer.setEnabled(False)
@@ -177,7 +179,7 @@ class ECUI(QWidget):
 		self.layout = QVBoxLayout(self)
 		self.layout.addWidget(self.tabs)
 		self.setLayout(self.layout)
-		self.setGeometry(500, 200, 800, 600)
+		self.setGeometry(500, 200, 900, 700)
 		self.setWindowTitle("Engine Control UI")
 		self.setWindowIcon(QIcon('icon.png'))
 
@@ -215,10 +217,11 @@ class ECUI(QWidget):
 			self.sequence.setStatus('abort')
 			self.countdownEvent()
 			self.label_countdownClock.setStyleSheet('color: #ff0000')
-			self.btn_countdownStartStop.setText("Reset")
-			self.btn_countdownStartStop.setToolTip("Reset the Countdown")
+			self.btn_countdownStartStop.setText("Reset and Save Log")
+			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-		elif self.btn_countdownStartStop.text() == "Reset":
+
+		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)
 			self.countdownTimer.reset()
@@ -228,6 +231,17 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Start")
 			self.btn_countdownStartStop.setToolTip("Start the Countdown")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #00FF00;')
+
+			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
+			with open('log/'+logfilename, 'w', newline='') as csvfile:
+				fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber']
+				writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+				writer.writeheader()
+				for line in self.loggingvalues:
+					writer.writerow(line)
+
+			self.loggingvalues.clear()
 		else:
 			print("Error: invalid button state")
 
@@ -242,6 +256,16 @@ class ECUI(QWidget):
 		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
+
+		pressure_fuel = self.hedgehog.get_analog(0)  # TODO: plot measured values
+		pressure_oxidizer = self.hedgehog.get_analog(1)
+		pressure_chamber = self.hedgehog.get_analog(2)
+		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
+		                           'ServoFuel': self.servo_fuel.getPositionPercent(),
+		                           'ServoOxidizer': self.servo_oxidizer.getPositionPercent(),
+		                           'PressureFuel': pressure_fuel,
+		                           'PressureOxidizer': pressure_oxidizer,
+		                           'PressureChamber': pressure_chamber})
 
 	def manualControlEnable(self):
 		print("Manual Control Enabled")

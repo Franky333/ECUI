@@ -24,7 +24,7 @@ class SequencePlot(FigureCanvas):
 		x_min = int(self.sequence.getSmallestTimestamp() - 1)
 		y_min = int(self.sequence.getLargestTimestamp() + 1)
 		self.axes.set_xlim(x_min, y_min)
-		self.axes.set_ylim(0, 100)
+		self.axes.set_ylim(-1, 101)
 		self.axes.set_xticks(range(x_min, y_min+1))
 		self.axes.set_yticks(range(0, 110, 10))
 		self.axes.grid()
