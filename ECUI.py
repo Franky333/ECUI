@@ -21,13 +21,16 @@ class ECUI(QWidget):
 		super(ECUI, self).__init__(parent)
 
 		self.stack = ExitStack()
-		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))
+		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
 
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
 		self.sequence = Sequence()
 		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
 		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
-		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')
+		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
+		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
+
+		self.batteryVoltage = 0.0
 
 		self.loggingvalues = []
 
@@ -40,6 +43,10 @@ class ECUI(QWidget):
 		self.label_countdownClock.setStyleSheet('color: #000000')
 		self.label_countdownClock.setToolTip("Countdown Clock")
 
+		self.label_batteryVoltage = QLabel("0.0V", self)
+		self.label_batteryVoltage.setStyleSheet('color: #000000')
+		self.label_batteryVoltage.setToolTip("Battery Voltage")
+
 		self.btn_countdownStartStop = QPushButton("Start", self)
 		self.btn_countdownStartStop.setToolTip("Start the Countdown")
 		self.btn_countdownStartStop.clicked.connect(self.countdownStartStopReset)
@@ -47,6 +54,7 @@ class ECUI(QWidget):
 		self.btn_countdownStartStop.setStyleSheet('background-color: #00ff00;')
 
 		self.layout_countdown = QHBoxLayout()
+		self.layout_countdown.addWidget(self.label_batteryVoltage)
 		self.layout_countdown.addWidget(self.label_countdownClock)
 		self.layout_countdown.addWidget(self.btn_countdownStartStop)
 
@@ -222,6 +230,17 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
+
+			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
+			with open('log/'+logfilename, 'w', newline='') as csvfile:
+				fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
+				writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+				writer.writeheader()
+				for line in self.loggingvalues:
+					writer.writerow(line)
+
+			self.loggingvalues.clear()
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)
 			self.countdownTimer.reset()
@@ -232,16 +251,6 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setToolTip("Start the Countdown")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #00FF00;')
 
-			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
-			with open('log/'+logfilename, 'w', newline='') as csvfile:
-				fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber']
-				writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
-				writer.writeheader()
-				for line in self.loggingvalues:
-					writer.writerow(line)
-
-			self.loggingvalues.clear()
 		else:
 			print("Error: invalid button state")
 
@@ -257,15 +266,21 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
-		pressure_fuel = self.hedgehog.get_analog(0)  # TODO: plot measured values
-		pressure_oxidizer = self.hedgehog.get_analog(1)
-		pressure_chamber = self.hedgehog.get_analog(2)
+		pressure_fuel = (self.hedgehog.get_analog(0) - 240) * 0.01626  # TODO: move sensors to own class, improve cal, plot measured values
+		pressure_oxidizer = (self.hedgehog.get_analog(1) - 240) * 0.01626
+		pressure_chamber = (self.hedgehog.get_analog(2) - 240) * 0.01626
+		temperature_fuel = (self.hedgehog.get_analog(8) - 384) * 0.18
 		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
 		                           'ServoFuel': self.servo_fuel.getPositionPercent(),
 		                           'ServoOxidizer': self.servo_oxidizer.getPositionPercent(),
 		                           'PressureFuel': pressure_fuel,
 		                           'PressureOxidizer': pressure_oxidizer,
-		                           'PressureChamber': pressure_chamber})
+		                           'PressureChamber': pressure_chamber,
+		                           'TemperatureFuel': temperature_fuel})
+
+		voltageNew = self.hedgehog.get_analog(0x80) / 1000  # FIXME:  move to regular event
+		self.batteryVoltage = self.batteryVoltage * 0.6 + voltageNew * 0.4
+		self.label_batteryVoltage.setText("Battery: %.1fV" % self.batteryVoltage)
 
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
