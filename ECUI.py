@@ -2,6 +2,8 @@
 import csv
 import datetime
 
+import time
+
 from hedgehog.client import connect
 from contextlib import ExitStack
 
@@ -203,6 +205,8 @@ class ECUI(QWidget):
 			event.ignore()
 
 	def cleanup(self):
+		self.servo_fuel.disable()
+		self.servo_oxidizer.disable()
 		self.stack.close()
 		self.countdownTimer.stop()
 		self.sequence.saveSequence()
@@ -220,6 +224,9 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Abort")
 			self.btn_countdownStartStop.setToolTip("Stop the Countdown")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #FF0000;')
+			self.servo_fuel.enable()
+			self.servo_oxidizer.enable()
+
 		elif self.btn_countdownStartStop.text() == "Abort":
 			self.countdownTimer.stop()
 			self.sequence.setStatus('abort')
@@ -228,9 +235,11 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Reset and Save Log")
 			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
+			time.sleep(1) # FIXME: wait for servos to close valves
+			self.servo_fuel.disable()
+			self.servo_oxidizer.disable()
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
-
 			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
 			with open('log/'+logfilename, 'w', newline='') as csvfile:
 				fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
@@ -291,17 +300,23 @@ class ECUI(QWidget):
 		self.checkbox_manualControlIgniter.setEnabled(True)
 		self.slider_manualControlFuel.setEnabled(True)
 		self.slider_manualControlOxidizer.setEnabled(True)
+		self.servo_fuel.enable()
+		self.servo_oxidizer.enable()
 
 	def manualControlDisable(self):
 		print("Manual Control Disabled")
 		self.checkbox_manualControl.setChecked(False)
-		self.btn_countdownStartStop.setEnabled(True)
-		self.checkbox_calibration.setEnabled(True)
 		self.checkbox_manualControlIgniter.setEnabled(False)
 		self.checkbox_manualControlIgniter.setChecked(False)
-		self.manualControlIgniterDisable()
 		self.slider_manualControlFuel.setEnabled(False)
 		self.slider_manualControlOxidizer.setEnabled(False)
+		self.manualControlIgniterDisable()
+		self.countdownEvent()
+		time.sleep(1)  # FIXME: wait for servos to close valves
+		self.servo_fuel.disable()
+		self.servo_oxidizer.disable()
+		self.btn_countdownStartStop.setEnabled(True)
+		self.checkbox_calibration.setEnabled(True)
 
 	def manualControlEnableDisable(self):  # TODO: rename to checkbox_manualControl_onClick, same for other callbacks
 		if self.checkbox_manualControl.isChecked():
@@ -345,11 +360,11 @@ class ECUI(QWidget):
 		self.btn_cal_fuel_max.setEnabled(True)
 		self.btn_cal_oxidizer_min.setEnabled(True)
 		self.btn_cal_oxidizer_max.setEnabled(True)
+		self.servo_fuel.enable()
+		self.servo_oxidizer.enable()
 
 	def calibrationDisable(self):
 		print("Calibration Mode Disabled")
-		self.btn_countdownStartStop.setEnabled(True)
-		self.checkbox_manualControl.setEnabled(True)
 		self.checkbox_calibration.setChecked(False)
 		self.spinbox_cal_fuel.setEnabled(False)
 		self.spinbox_cal_oxidizer.setEnabled(False)
@@ -358,6 +373,11 @@ class ECUI(QWidget):
 		self.btn_cal_oxidizer_min.setEnabled(False)
 		self.btn_cal_oxidizer_max.setEnabled(False)
 		self.countdownEvent()
+		time.sleep(1)  # FIXME: wait for servos to close valves
+		self.servo_fuel.disable()
+		self.servo_oxidizer.disable()
+		self.btn_countdownStartStop.setEnabled(True)
+		self.checkbox_manualControl.setEnabled(True)
 
 	def calibrationEnableDisable(self):
 		if self.checkbox_calibration.isChecked():

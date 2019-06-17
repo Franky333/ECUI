@@ -6,6 +6,7 @@ class Servo(object):
 		self.hedgehog = hedgehog
 		self.port = port
 		self.name = name
+		self.enabled = False
 		self.position_percent = None
 		self.position_us = None
 		self.min_us = None
@@ -14,6 +15,19 @@ class Servo(object):
 		self.loadSettings()
 
 		self.setPositionPercent(0)
+
+	def enable(self):
+		if not self.enabled:
+			self.enabled = True
+			self.hedgehog.set_servo_raw(self.port, self.position_us * 2)
+
+	def disable(self):
+		if self.enabled:
+			self.enabled = False
+			self.hedgehog.set_servo_raw(self.port, False)
+
+	def getEnabled(self):
+		return self.enabled
 
 	def setPositionPercent(self, position_percent):  # 0-100
 		if not position_percent == self.position_percent:
@@ -27,7 +41,8 @@ class Servo(object):
 		if not position_us == self.position_us:
 			self.position_us = position_us
 			print("servo %s set to %dus" % (self.name, self.position_us))
-			self.hedgehog.set_servo_raw(self.port, position_us*2)
+			if self.enabled:
+				self.hedgehog.set_servo_raw(self.port, position_us*2)
 
 	def getPositionUs(self):
 		return self.position_us
