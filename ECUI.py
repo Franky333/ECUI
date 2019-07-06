@@ -2,7 +2,7 @@
 import csv
 import datetime
 
-import time
+import time, os
 
 from hedgehog.client import connect
 from contextlib import ExitStack
@@ -241,14 +241,16 @@ class ECUI(QWidget):
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
 			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
-			with open('log/'+logfilename, 'w', newline='') as csvfile:
-				fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
-				writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+			if os.path.isdir("log"): #FIXME: better check maybe even msgbox?
+				with open('log/'+logfilename, 'w', newline='') as csvfile:
+					fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
+					writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-				writer.writeheader()
-				for line in self.loggingvalues:
-					writer.writerow(line)
-
+					writer.writeheader()
+					for line in self.loggingvalues:
+						writer.writerow(line)
+			else:
+				print("Error: Please create log directory! | No read premissions.")
 			self.loggingvalues.clear()
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)
