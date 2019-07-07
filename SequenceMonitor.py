@@ -8,30 +8,50 @@ class SequenceMonitor(QWidget):
 		super(SequenceMonitor, self).__init__(parent)
 
 		header = self.createHeader()
+		seqList = self.createSeqList()
 
-		hLayout = QHBoxLayout()
-		hLayout.addWidget(header)
+		vLayout = QVBoxLayout()
+		vLayout.addWidget(header)
+		vLayout.addWidget(seqList)
 
-		self.setLayout(hLayout)
+		self.setLayout(vLayout)
 
 	def createHeader(self):
 
 		loadButton = QPushButton("Load")
 		loadButton.clicked.connect(self.loadSequence)
 
+		saveButton = QPushButton("Save")
+		saveButton.clicked.connect(self.saveSequence)
 
-
-		vLayout = QVBoxLayout()
-		vLayout.addWidget(loadButton)
+		hLayout = QHBoxLayout()
+		hLayout.addWidget(loadButton)
+		hLayout.addWidget(saveButton)
 
 		header = QWidget()
-		header.setLayout(vLayout)
+		header.setLayout(hLayout)
 
 		return header
 
+	def createSeqList(self):
+
+		vLayout = QVBoxLayout()
+
+		seqList = QWidget()
+		seqList.setLayout(vLayout)
+		seqList.setObjectName("seqList")
+
+		return seqList
 
 	def loadSequence(self):
 
-		fname = QFileDialog.getOpenFileName(self, 'Open file', '.', "*.py")
+		fname = QFileDialog.getOpenFileName(self, "Open file", ".", "*.seq")
 
 		print(fname)
+
+	def saveSequence(self):
+
+		#TODO: implement
+		sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
+
+		print(sname)
