@@ -5,11 +5,23 @@ from PyQt5.QtWidgets import *
 import json
 
 from SequenceListItem import SequenceListItem
+from SequenceController import SequenceController
+
+from enum import Enum
+
+
+class SequenceExportMode(Enum):
+	LEGACY = 1
+	NEW = 2
+
 
 class SequenceMonitor(QWidget):
 
 	def __init__(self, parent=None):
 		super(SequenceMonitor, self).__init__(parent)
+
+		self.controller = SequenceController()
+		self.parent = parent
 
 		header = self.createHeader()
 		seqList = self.createSeqList()
@@ -20,8 +32,6 @@ class SequenceMonitor(QWidget):
 
 		self.setLayout(vLayout)
 
-
-
 	def createHeader(self):
 
 		loadButton = QPushButton("Load")
@@ -30,9 +40,17 @@ class SequenceMonitor(QWidget):
 		saveButton = QPushButton("Save")
 		saveButton.clicked.connect(self.saveSequence)
 
+
+		exportComboBox = QComboBox()
+		exportComboBox.setObjectName("exportComboBox")
+		exportComboBox.addItem(SequenceExportMode.LEGACY.name)
+		exportComboBox.addItem(SequenceExportMode.NEW.name)
+
 		hLayout = QHBoxLayout()
 		hLayout.addWidget(loadButton)
 		hLayout.addWidget(saveButton)
+		hLayout.addWidget(QLabel("Export Mode: "))
+		hLayout.addWidget(exportComboBox)
 
 		header = QWidget()
 		header.setLayout(hLayout)
@@ -42,29 +60,15 @@ class SequenceMonitor(QWidget):
 	def createSeqList(self):
 
 		# Create ListWidget and add 10 items to move around.
-		listWidget = QListWidget()
+		self.listWidget = QListWidget()
 		# Enable drag & drop ordering of items.
-		listWidget.setDragDropMode(QAbstractItemView.InternalMove)
-		listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
-		listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
+		self.listWidget.setDragDropMode(QAbstractItemView.InternalMove)
+		self.listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
+		self.listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
 
-		for x in range(1, 11):
-
-			listWidgetItem = QListWidgetItem(listWidget)
-			item = SequenceListItem("Item {:02d}".format(x), listWidgetItem)
-
-			# Add QListWidgetItem into QListWidget
-			listWidget.addItem(listWidgetItem)
-			listWidget.setItemWidget(listWidgetItem, item)
-			item.addProperty("Time", str(x*20), "us")
-			item.addProperty("Time", str(x*20), "us")
-
-
-			if x % 2 == 0:
-				item.addProperty("Time", str(x*20), "us")
-
+		self.loadSequence()
 		vLayout = QVBoxLayout()
-		vLayout.addWidget(listWidget)
+		vLayout.addWidget(self.listWidget)
 
 		seqList = QWidget()
 		seqList.setLayout(vLayout)
@@ -74,15 +78,43 @@ class SequenceMonitor(QWidget):
 
 	def loadSequence(self):
 
-		fname = QFileDialog.getOpenFileName(self, "Open file", ".", "*.seq")
+		self.listWidget.clear()
 
-
+		fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
 		print(fname)
 
+		with open(fname[0]) as jsonFile:
+			self.controller.load(jsonFile.read())
+
+		for entry in self.controller.getData():
+			item = self.createWidgetItem()
+			item.addProperty("time", str(entry["timestamp"]))
+			for val in entry.keys():
+				if val != "timestamp":
+					item = self.createWidgetItem()
+					item.addProperty(str(val), str(entry[val]))
+
+	def createWidgetItem(self, objName=None):
+
+
+		listWidgetItem = QListWidgetItem(self.listWidget)
+		item = SequenceListItem(listWidgetItem, objName, self)
+
+		# Add QListWidgetItem into QListWidget
+		self.listWidget.addItem(listWidgetItem)
+		self.listWidget.setItemWidget(listWidgetItem, item)
+
+		return item
 
 	def saveSequence(self):
 
 		#TODO: implement
 		sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
+
+		mode = self.findChild(QComboBox, "exportComboBox").currentText()
+		if mode == "LEGACY":
+			self.controller.save(SequenceExportMode.LEGACY)
+		elif mode == "NEW":
+			self.controller.save(SequenceExportMode.NEW)
 
 		print(sname)

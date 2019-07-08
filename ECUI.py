@@ -10,7 +10,7 @@ class ECUI(QWidget):
 		super(ECUI, self).__init__(parent)
 
 		#sequence Monitor
-		seqMonitor = SequenceMonitor()
+		seqMonitor = SequenceMonitor(self)
 
 		vLayout = QVBoxLayout()
 		vLayout.addWidget(seqMonitor)
