@@ -2,6 +2,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import json
+
+from SequenceListItem import SequenceListItem
+
 class SequenceMonitor(QWidget):
 
 	def __init__(self, parent=None):
@@ -15,6 +19,8 @@ class SequenceMonitor(QWidget):
 		vLayout.addWidget(seqList)
 
 		self.setLayout(vLayout)
+
+
 
 	def createHeader(self):
 
@@ -35,7 +41,30 @@ class SequenceMonitor(QWidget):
 
 	def createSeqList(self):
 
+		# Create ListWidget and add 10 items to move around.
+		listWidget = QListWidget()
+		# Enable drag & drop ordering of items.
+		listWidget.setDragDropMode(QAbstractItemView.InternalMove)
+		listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
+		listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
+
+		for x in range(1, 11):
+
+			listWidgetItem = QListWidgetItem(listWidget)
+			item = SequenceListItem("Item {:02d}".format(x), listWidgetItem)
+
+			# Add QListWidgetItem into QListWidget
+			listWidget.addItem(listWidgetItem)
+			listWidget.setItemWidget(listWidgetItem, item)
+			item.addProperty("Time", str(x*20), "us")
+			item.addProperty("Time", str(x*20), "us")
+
+
+			if x % 2 == 0:
+				item.addProperty("Time", str(x*20), "us")
+
 		vLayout = QVBoxLayout()
+		vLayout.addWidget(listWidget)
 
 		seqList = QWidget()
 		seqList.setLayout(vLayout)
@@ -47,7 +76,9 @@ class SequenceMonitor(QWidget):
 
 		fname = QFileDialog.getOpenFileName(self, "Open file", ".", "*.seq")
 
+
 		print(fname)
+
 
 	def saveSequence(self):
 

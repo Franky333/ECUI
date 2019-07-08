@@ -24,7 +24,9 @@ if __name__ == '__main__':
 
 	app = QApplication(sys.argv)
 
-	mainWindow = ECUI()
+	mainWindow = QMainWindow()
+	mainWindow.setCentralWidget(ECUI())
+	mainWindow.setMinimumSize(QSize(1280/2,720))
 
 	mainWindow.show()
 
