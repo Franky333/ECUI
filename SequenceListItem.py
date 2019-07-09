@@ -30,21 +30,29 @@ class SequenceListItem(QWidget):
 	def addProperty(self, key, value, unit=""):
 
 		self.properties[key] = [value, unit]
-		self.hLayout.addWidget(QLineEdit(str(key)))
+		keyLineEdit = QLineEdit(str(key))
+		keyLineEdit.setObjectName("keyLineEdit" + str(self.id))
+		self.hLayout.addWidget(keyLineEdit)
 		self.hLayout.addWidget(QLabel(": "))
-		self.hLayout.addWidget(QLineEdit(str(value)))
+		valLineEdit = QLineEdit()
+		valLineEdit.setText(str(value))
+		valLineEdit.setValidator(QDoubleValidator())
+		valLineEdit.textChanged.connect(self._onValueChanged)
+		valLineEdit.setObjectName("valLineEdit" + str(self.id))
+		valLineEdit.editingFinished.connect(lambda: self._onValueFinished(valLineEdit.objectName()))
+		self.hLayout.addWidget(valLineEdit)
 		if unit != "":
 			self.hLayout.addWidget(QLabel(str(unit)))
 		self.hLayout.addStretch()
 
-		print(self.wi.sizeHint())
+		# print(self.wi.sizeHint())
 
 		self.hLayout.update()
 		self.wi.setLayout(self.hLayout)
 
-		print(self.hLayout.sizeHint())
-		print(self.wi.sizeHint())
-		print("=======")
+		# print(self.hLayout.sizeHint())
+		# print(self.wi.sizeHint())
+		# print("=======")
 		self.adjustSize()
 		self.listItem.setSizeHint(QSize(self.sizeHint().width(), self.sizeHint().height()+40))
 
@@ -55,3 +63,21 @@ class SequenceListItem(QWidget):
 	def dropEvent(self, e):
 
 		print(self)
+
+	def _onValueFinished(self, e):
+
+		print(e)
+		valLine = self.findChild(QLineEdit, e)
+		keyLine = self.findChild(QLineEdit, e.replace("val", "key"))
+
+		val = valLine.text()
+		key = keyLine.text()
+
+		print(key, val)
+		print(self.properties)
+		print("------")
+		self.properties[key] = [val, self.properties[key][1]]
+
+	def _onValueChanged(self, e):
+
+		self._currValChange = e

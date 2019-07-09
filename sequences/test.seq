@@ -8,40 +8,52 @@
 
     "data": [
             {
-                "fuel": 0,
-                "igniter": 0,
-                "oxidizer": 0,
-                "timestamp": "START"
+                "timestamp": "START",
+                "actions" : {
+                  "fuel": 0,
+                  "igniter": 0,
+                  "oxidizer": 0
+                }
             },
             {
-                "fuel": 0,
-                "igniter": 0,
-                "oxidizer": 0,
-                "timestamp": 0.0
+                "timestamp": 0.0,
+                "actions" : {
+                  "fuel": 0,
+                  "igniter": 0,
+                  "oxidizer": 0
+                }
             },
             {
-                "fuel": 100,
-                "igniter": 0,
-                "oxidizer": 100,
-                "timestamp": 10.0
+                "timestamp": 10.0,
+                "actions" : {
+                  "fuel": 100,
+                  "igniter": 0,
+                  "oxidizer": 100
+                }
             },
             {
-                "fuel": 100,
-                "igniter": 0,
-                "oxidizer": 100,
-                "timestamp": 11.0
+                "timestamp": 11.0,
+                "actions" : {
+                  "fuel": 100,
+                  "igniter": 0,
+                  "oxidizer": 100
+                }
             },
             {
-                "fuel": 0,
-                "igniter": 0,
-                "oxidizer": 0,
-                "timestamp": 11.5
+               "timestamp": 11.5,
+                "actions" : {
+                  "fuel": 0,
+                  "igniter": 0,
+                  "oxidizer": 0
+                }
             },
             {
-                "fuel": 0,
-                "igniter": 0,
-                "oxidizer": 0,
-                "timestamp": "END"
+                "timestamp": "END",
+                "actions" : {
+                  "fuel": 0,
+                  "igniter": 0,
+                  "oxidizer": 0
+                }
             }
     ]
 }

@@ -91,10 +91,10 @@ class SequenceMonitor(QWidget):
 		for entry in self.controller.getData():
 			item = self.listWidget.createItem()
 			item.addProperty("timestamp", str(entry["timestamp"]))
-			for val in entry.keys():
+			for val in entry["actions"].keys():
 				if val != "timestamp":
 					item = self.listWidget.createItem()
-					item.addProperty(str(val), str(entry[val]))
+					item.addProperty(str(val), str(entry["actions"][val]))
 
 	def saveSequence(self):
 
@@ -111,8 +111,7 @@ class SequenceMonitor(QWidget):
 
 	def updateController(self, timeBefore, timeAfter, currKey, currVal):
 
-		self.controller.removeEntry(timeBefore, currKey, currVal)
-		self.controller.addEntry(timeBefore, currKey, currVal)
 		print(timeBefore, timeAfter, currKey, currVal)
-		print("hello")
+		self.controller.removeEntry(timeBefore, currKey, currVal)
+		self.controller.addOrUpdateEntry(timeBefore, currKey, currVal)
 

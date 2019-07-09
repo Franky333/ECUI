@@ -12,10 +12,11 @@ class SequenceController():
 
 		if self.isJson(jsonFile):
 
-			self._jsonData = json.loads(jsonFile)
-			self._globals = self._jsonData["globals"]
-			self._data = self._jsonData["data"]
+			jsonData = json.loads(jsonFile)
+			self._globals = jsonData["globals"]
+			self._data = jsonData["data"]
 
+			self._fetchStamps()
 		else:
 			raise ValueError("loadSequence: String not a valid JSON object")
 
@@ -24,16 +25,18 @@ class SequenceController():
 		#TODO: implement
 		print(exportMode.name)
 
-	def removeEntry(self, timeBefore, currKey, currVal):
-		pass
+	def removeEntry(self, timestamp, currKey, currVal):
 
-	def addEntry(self, timeBefore, currKey, currVal):
-		pass
+		ind = self._stamps[timestamp]
+		self.getData()[ind]["actions"].pop(currKey)
 
-	#returns none if no json Data or invalid string entered in loadSequence
-	def getJsonData(self):
 
-		return self._jsonData
+	def addOrUpdateEntry(self, timestamp, currKey, currVal):
+
+		ind = self._stamps[timestamp]
+		currAction = self.getData()[ind]["actions"]
+		currAction[currKey] = currVal
+
 
 	def isJson(self, str):
 		try:
@@ -45,3 +48,10 @@ class SequenceController():
 	def getData(self):
 
 		return self._data
+
+	def _fetchStamps(self):
+		self._stamps = {}
+		for i in range(len(self.getData())):
+
+			self._stamps[self.getData()[i]["timestamp"]] = i
+		print(self._stamps)

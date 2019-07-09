@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from SequenceListItem import SequenceListItem
+from utils import Utils
 
 class SequenceList(QListWidget):
 
@@ -49,8 +50,15 @@ class SequenceList(QListWidget):
 			currKey = list(dropItemProperties.keys())[0]
 			currVal = dropItemProperties[currKey][0]
 
+
+			valBefore, succ = Utils.tryParseFloat(valBefore)
+
+			valAfter, succ = Utils.tryParseFloat(valAfter)
+
+
 			if timeBefore is not None and timeAfter is not None:
 				self.dropCallback(valBefore, valAfter, currKey, currVal)
+
 
 
 
