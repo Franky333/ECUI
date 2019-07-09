@@ -11,6 +11,6 @@ class Utils():
 			val = f
 			success = True
 		except ValueError:
-			print("Not a float")
+			pass
 
 		return val, success

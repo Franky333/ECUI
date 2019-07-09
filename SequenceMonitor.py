@@ -68,11 +68,11 @@ class SequenceMonitor(QWidget):
 		self.listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
 
 		#self.loadSequence()
-		vLayout = QVBoxLayout()
-		vLayout.addWidget(self.listWidget)
+		self.listLayout = QVBoxLayout()
+		self.listLayout.addWidget(self.listWidget)
 
 		seqList = QWidget()
-		seqList.setLayout(vLayout)
+		seqList.setLayout(self.listLayout)
 		seqList.setObjectName("seqList")
 
 		return seqList
@@ -89,8 +89,13 @@ class SequenceMonitor(QWidget):
 			self.controller.load(jsonFile.read())
 
 		for entry in self.controller.getData():
-			item = self.listWidget.createItem()
-			item.addProperty("timestamp", str(entry["timestamp"]))
+			time = str(entry["timestamp"])
+			if time == "START":
+				item = SequenceListItem('', None, None, self)
+				self.listLayout.insertWidget(0, item)
+			else:
+				item = self.listWidget.createItem()
+			item.addProperty("timestamp", time)
 			for val in entry["actions"].keys():
 				if val != "timestamp":
 					item = self.listWidget.createItem()

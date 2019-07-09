@@ -54,7 +54,9 @@ class SequenceListItem(QWidget):
 		# print(self.wi.sizeHint())
 		# print("=======")
 		self.adjustSize()
-		self.listItem.setSizeHint(QSize(self.sizeHint().width(), self.sizeHint().height()+40))
+
+		if self.listItem is not None:
+			self.listItem.setSizeHint(QSize(self.sizeHint().width(), self.sizeHint().height()+40))
 
 	def sizeHint(self):
 
@@ -73,9 +75,6 @@ class SequenceListItem(QWidget):
 		val = valLine.text()
 		key = keyLine.text()
 
-		print(key, val)
-		print(self.properties)
-		print("------")
 		self.properties[key] = [val, self.properties[key][1]]
 
 	def _onValueChanged(self, e):
