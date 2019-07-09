@@ -4,10 +4,11 @@ from PyQt5.QtWidgets import *
 
 class SequenceListItem(QWidget):
 
-	def __init__(self, boundListItem=None, objName=None, parent=None):
+	def __init__(self, id, boundListItem=None, objName=None, parent=None):
 		super(SequenceListItem, self).__init__(parent)
 
 		self.listItem = boundListItem
+		self.id = id;
 
 		if objName is not None:
 			self.setObjectName(objName)
@@ -50,3 +51,7 @@ class SequenceListItem(QWidget):
 	def sizeHint(self):
 
 		return self.wi.sizeHint()
+
+	def dropEvent(self, e):
+
+		print(self)

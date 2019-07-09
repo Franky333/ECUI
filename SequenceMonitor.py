@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 
 import json
 
+from SequenceList import SequenceList
 from SequenceListItem import SequenceListItem
 from SequenceController import SequenceController
 
@@ -60,13 +61,13 @@ class SequenceMonitor(QWidget):
 	def createSeqList(self):
 
 		# Create ListWidget and add 10 items to move around.
-		self.listWidget = QListWidget()
+		self.listWidget = SequenceList(self.updateController)
 		# Enable drag & drop ordering of items.
 		self.listWidget.setDragDropMode(QAbstractItemView.InternalMove)
 		self.listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
 		self.listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
 
-		self.loadSequence()
+		#self.loadSequence()
 		vLayout = QVBoxLayout()
 		vLayout.addWidget(self.listWidget)
 
@@ -80,31 +81,20 @@ class SequenceMonitor(QWidget):
 
 		self.listWidget.clear()
 
-		fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
+		#fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
+		fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
 		print(fname)
 
 		with open(fname[0]) as jsonFile:
 			self.controller.load(jsonFile.read())
 
 		for entry in self.controller.getData():
-			item = self.createWidgetItem()
-			item.addProperty("time", str(entry["timestamp"]))
+			item = self.listWidget.createItem()
+			item.addProperty("timestamp", str(entry["timestamp"]))
 			for val in entry.keys():
 				if val != "timestamp":
-					item = self.createWidgetItem()
+					item = self.listWidget.createItem()
 					item.addProperty(str(val), str(entry[val]))
-
-	def createWidgetItem(self, objName=None):
-
-
-		listWidgetItem = QListWidgetItem(self.listWidget)
-		item = SequenceListItem(listWidgetItem, objName, self)
-
-		# Add QListWidgetItem into QListWidget
-		self.listWidget.addItem(listWidgetItem)
-		self.listWidget.setItemWidget(listWidgetItem, item)
-
-		return item
 
 	def saveSequence(self):
 
@@ -118,3 +108,11 @@ class SequenceMonitor(QWidget):
 			self.controller.save(SequenceExportMode.NEW)
 
 		print(sname)
+
+	def updateController(self, timeBefore, timeAfter, currKey, currVal):
+
+		self.controller.removeEntry(timeBefore, currKey, currVal)
+		self.controller.addEntry(timeBefore, currKey, currVal)
+		print(timeBefore, timeAfter, currKey, currVal)
+		print("hello")
+

@@ -21,7 +21,14 @@ class SequenceController():
 
 	def save(self, exportMode):
 
+		#TODO: implement
 		print(exportMode.name)
+
+	def removeEntry(self, timeBefore, currKey, currVal):
+		pass
+
+	def addEntry(self, timeBefore, currKey, currVal):
+		pass
 
 	#returns none if no json Data or invalid string entered in loadSequence
 	def getJsonData(self):
