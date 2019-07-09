@@ -1,4 +1,10 @@
 
+from enum import Enum
+
+class SequenceExportMode(Enum):
+	LEGACY = 1
+	NEW = 2
+
 class Utils():
 
 	@staticmethod

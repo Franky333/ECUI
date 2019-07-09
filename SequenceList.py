@@ -7,12 +7,12 @@ from utils import Utils
 
 class SequenceList(QListWidget):
 
-	def __init__(self, dropCallback=None, boundListItem=None, objName=None, parent=None):
+	def __init__(self, updateCallback=None, boundListItem=None, objName=None, parent=None):
 		super(SequenceList, self).__init__(parent)
 
 		self.__nextItemId = 0
 
-		self.dropCallback = dropCallback
+		self.updateCallback = updateCallback
 
 
 	def dragMoveEvent(self, event):
@@ -37,27 +37,31 @@ class SequenceList(QListWidget):
 
 		indAfter = name.currentRow()
 
-		if self.dropCallback is not None:
-			if indBefore > indAfter:
-				timeBefore, valBefore = self.getCorrespondingTimestampItem(indBefore)
-				timeAfter, valAfter = self.getCorrespondingTimestampItem(indAfter)
-			else:
-				timeBefore, valBefore = self.getCorrespondingTimestampItem(indBefore-1)
-				timeAfter, valAfter = self.getCorrespondingTimestampItem(indAfter-1)
+		dropItemProperties = self.itemWidget(self.item(indAfter)).properties
+		if "timestamp" in dropItemProperties.keys():
+			#TODO: process timestamp movement accordingly
+			pass
+		else:
+			if self.updateCallback is not None:
+				if indBefore > indAfter:
+					timeBefore, valBefore = self.getCorrespondingTimestampItem(indBefore)
+					timeAfter, valAfter = self.getCorrespondingTimestampItem(indAfter)
+				else:
+					timeBefore, valBefore = self.getCorrespondingTimestampItem(indBefore-1)
+					timeAfter, valAfter = self.getCorrespondingTimestampItem(indAfter-1)
 
 
-			dropItemProperties = self.itemWidget(self.item(indAfter)).properties
-			currKey = list(dropItemProperties.keys())[0]
-			currVal = dropItemProperties[currKey][0]
+				if timeAfter is not None:
 
+					if timeBefore is not None:
+						valBefore, succ = Utils.tryParseFloat(valBefore)
+					else:
+						valBefore = "START"
+					valAfter, succ = Utils.tryParseFloat(valAfter)
 
-			valBefore, succ = Utils.tryParseFloat(valBefore)
+					for currKey, currVal in dropItemProperties.items():
 
-			valAfter, succ = Utils.tryParseFloat(valAfter)
-
-
-			if timeBefore is not None and timeAfter is not None:
-				self.dropCallback(valBefore, valAfter, currKey, currVal)
+						self.updateCallback(currKey, currVal[0], valAfter, valBefore)
 
 
 
@@ -66,7 +70,7 @@ class SequenceList(QListWidget):
 
 
 		listWidgetItem = QListWidgetItem(self)
-		item = SequenceListItem(self.__getNextId(), listWidgetItem, objName, self)
+		item = SequenceListItem(self.__getNextId(), self.onListItemChanged, listWidgetItem, objName, self)
 
 		# Add QListWidgetItem into QListWidget
 		self.addItem(listWidgetItem)
@@ -94,5 +98,17 @@ class SequenceList(QListWidget):
 			if "timestamp" in currItem.properties:
 				item = currItem
 				value = currItem.properties["timestamp"][0]
-
+		if item is None:
+			value = "START"
 		return item, value
+
+	def onListItemChanged(self, item, key, val):
+
+		index = self.row(item)
+		print(index)
+		timeItem, time = self.getCorrespondingTimestampItem(index)
+		time, succ = Utils.tryParseFloat(time)
+		print(timeItem, time)
+		self.updateCallback(key, val, time)
+
+

@@ -4,8 +4,10 @@ from PyQt5.QtWidgets import *
 
 class SequenceListItem(QWidget):
 
-	def __init__(self, id, boundListItem=None, objName=None, parent=None):
+	def __init__(self, id, updateCallback=None, boundListItem=None, objName=None, parent=None):
 		super(SequenceListItem, self).__init__(parent)
+
+		self.updateCallback = updateCallback
 
 		self.listItem = boundListItem
 		self.id = id;
@@ -76,6 +78,9 @@ class SequenceListItem(QWidget):
 		key = keyLine.text()
 
 		self.properties[key] = [val, self.properties[key][1]]
+
+		if self.updateCallback is not None and self.listItem is not None:
+			self.updateCallback(self.listItem, key, val)
 
 	def _onValueChanged(self, e):
 

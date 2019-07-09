@@ -8,12 +8,7 @@ from SequenceList import SequenceList
 from SequenceListItem import SequenceListItem
 from SequenceController import SequenceController
 
-from enum import Enum
-
-
-class SequenceExportMode(Enum):
-	LEGACY = 1
-	NEW = 2
+from utils import *
 
 
 class SequenceMonitor(QWidget):
@@ -90,33 +85,58 @@ class SequenceMonitor(QWidget):
 
 		for entry in self.controller.getData():
 			time = str(entry["timestamp"])
-			if time == "START":
-				item = SequenceListItem('', None, None, self)
-				self.listLayout.insertWidget(0, item)
-			else:
-				item = self.listWidget.createItem()
+			# if time == "START":
+			# 	item = SequenceListItem('', None, None, None, self)
+			# 	self.listLayout.insertWidget(0, item)
+			# else:
+			item = self.listWidget.createItem()
 			item.addProperty("timestamp", time)
 			for val in entry["actions"].keys():
 				if val != "timestamp":
 					item = self.listWidget.createItem()
 					item.addProperty(str(val), str(entry["actions"][val]))
 
+	#NOTE: legacy export fule and oxidizer file names are hardcoded!!!
 	def saveSequence(self):
 
-		#TODO: implement
-		sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
+		import re
+		#sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
+		sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.seq", 'asdf']
 
 		mode = self.findChild(QComboBox, "exportComboBox").currentText()
 		if mode == "LEGACY":
-			self.controller.save(SequenceExportMode.LEGACY)
+			jsonStr = self.controller.exportJson(SequenceExportMode.LEGACY)
+			servoFuelStr, servoOxStr = self.controller.exportAdditionalLegacyFiles()
+			dir= re.sub(r"[^/]*\.seq", "", sname[0])
+
+			fuelFile = dir + "servo_fuel.json"
+			oxFile = dir + "servo_oxidizer.json"
+			seqFile = sname[0][:-4] + ".json"
+
+			self._writeToFile(fuelFile, servoFuelStr)
+			self._writeToFile(oxFile, servoOxStr)
+			self._writeToFile(seqFile, jsonStr)
+
+			print("Wrote Sequence in LEGACY mode to: ")
+			print("\t" + fuelFile)
+			print("\t" + oxFile)
+			print("\t" + seqFile)
+
 		elif mode == "NEW":
-			self.controller.save(SequenceExportMode.NEW)
+			jsonStr = self.controller.exportJson(SequenceExportMode.NEW)
+			self._writeToFile(sname[0], jsonStr)
+			print("Wrote Sequence in NEW mode to: ")
+			print("\t" + sname[0])
 
-		print(sname)
+	def _writeToFile(self, path, data):
 
-	def updateController(self, timeBefore, timeAfter, currKey, currVal):
+		with open(path, "w") as textFile:
+			textFile.write(data)
 
-		print(timeBefore, timeAfter, currKey, currVal)
-		self.controller.removeEntry(timeBefore, currKey, currVal)
-		self.controller.addOrUpdateEntry(timeBefore, currKey, currVal)
+
+	def updateController(self, currKey, currVal, timeAfter, timeBefore=None):
+
+		if timeBefore is not None:
+			self.controller.removeEntry(timeBefore, currKey, currVal)
+		self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
 

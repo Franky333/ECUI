@@ -1,11 +1,15 @@
 import json
 
+from utils import *
+
 class SequenceController():
 
 	def __init__(self, jsonData=None):
 
 		if jsonData is not None:
 			self.loadSequence(jsonData)
+
+		self._loaded = False
 
 
 	def load(self, jsonFile):
@@ -17,13 +21,37 @@ class SequenceController():
 			self._data = jsonData["data"]
 
 			self._fetchStamps()
+
+			self._loaded = True
 		else:
 			raise ValueError("loadSequence: String not a valid JSON object")
 
-	def save(self, exportMode):
+	def exportJson(self, exportMode):
 
-		#TODO: implement
-		print(exportMode.name)
+		jsonStr = None
+
+		if self._loaded:
+			if exportMode == SequenceExportMode.LEGACY:
+				jsonStr = self._exportLegacy()
+				jsonStr = json.dumps(jsonStr, indent=4)
+
+			elif exportMode == SequenceExportMode.NEW:
+				jsonStr = self._exportNew()
+				jsonStr = self._reformatJson(jsonStr)
+
+		return jsonStr
+
+	def exportAdditionalLegacyFiles(self):
+
+		if self._loaded:
+			fuel = self._globals["fuel"]
+			ox = self._globals["oxidizer"]
+
+
+			fuelStr = json.dumps(fuel, indent=4)
+			oxStr = json.dumps(ox, indent=4)
+
+		return fuelStr, oxStr
 
 	def removeEntry(self, timestamp, currKey, currVal):
 
@@ -49,9 +77,41 @@ class SequenceController():
 
 		return self._data
 
+
+	def _reformatJson(self, jsonStr):
+
+		if jsonStr is not None:
+			jsonStr = json.loads(jsonStr)
+			jsonStr = json.dumps(jsonStr, indent=4)
+
+		return jsonStr
+
 	def _fetchStamps(self):
 		self._stamps = {}
 		for i in range(len(self.getData())):
 
 			self._stamps[self.getData()[i]["timestamp"]] = i
 		print(self._stamps)
+
+	def _exportLegacy(self):
+
+		legJson = []
+		for entry in self.getData():
+			stamp = entry["timestamp"]
+			actions = entry["actions"]
+			if stamp == "START":
+				stamp = self._globals["startTime"]
+			elif stamp == "END":
+				stamp = self._globals["endTime"]
+			actions["timestamp"] = stamp
+			legJson.append(actions)
+		print(legJson)
+
+		return legJson
+
+	def _exportNew(self):
+
+		jsonStr = "{\n\"globals\":" + json.dumps(self._globals)
+		jsonStr += ", \"data\":" + json.dumps(self._data) + "\n}"
+
+		return jsonStr
