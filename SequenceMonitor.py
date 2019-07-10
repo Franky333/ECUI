@@ -126,8 +126,8 @@ class SequenceMonitor(QWidget):
 
 		self.listWidget.clear()
 
-		#fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
-		fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
+		fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
+		#fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
 		print(fname)
 
 		with open(fname[0]) as jsonFile:
@@ -156,8 +156,8 @@ class SequenceMonitor(QWidget):
 	def saveSequence(self):
 
 		import re
-		#sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
-		sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.seq", 'asdf']
+		sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
+		#sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.seq", 'asdf']
 
 		mode = self.findChild(QComboBox, "exportComboBox").currentText()
 		if mode == "LEGACY":

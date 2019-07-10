@@ -28,6 +28,8 @@ if __name__ == '__main__':
 	mainWindow.setCentralWidget(ECUI())
 	mainWindow.setMinimumSize(QSize(1280/2,720))
 
+	mainWindow.setStyle(QStyleFactory.create("Macintosh"))
+
 	mainWindow.show()
 
 	sys.exit(app.exec_())
