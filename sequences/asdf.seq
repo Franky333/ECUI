@@ -15,8 +15,8 @@
         {
             "timestamp": "START",
             "actions": {
-                "fuel": 20,
-                "igniter": 50,
+                "fuel": 0,
+                "igniter": 0,
                 "oxidizer": 0
             }
         },

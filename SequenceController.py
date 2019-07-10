@@ -53,7 +53,7 @@ class SequenceController():
 
 		return fuelStr, oxStr
 
-	def removeEntry(self, timestamp, currKey, currVal):
+	def removeEntry(self, timestamp, currKey):
 
 		ind = self._stamps[timestamp]
 		if currKey in self.getData()[ind]["actions"]:
@@ -66,6 +66,7 @@ class SequenceController():
 		currAction = self.getData()[ind]["actions"]
 		currAction[currKey] = currVal
 
+	#TODO: make it clean and move substring stuff to sequence monitor
 	def updateGlobal(self, currKey, currVal):
 
 		if "min" in currKey:

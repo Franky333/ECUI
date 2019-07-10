@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import *
 class SequenceListItem(QWidget):
 
 	def __init__(self, id, updateCallback=None, boundListItem=None, objName=None, parent=None):
+
 		super(SequenceListItem, self).__init__(parent)
 
 		self.updateCallback = updateCallback
@@ -39,10 +40,12 @@ class SequenceListItem(QWidget):
 			backColor = self._theme["actions"]
 
 		self.setStyleSheet(self.styleSheet() + "background-color: " + backColor)
+		self._prevKey = key
 
 		self.properties[key] = [value, unit]
 		keyLineEdit = QLineEdit(str(key))
 		keyLineEdit.setObjectName("keyLineEdit" + str(self.id))
+		keyLineEdit.editingFinished.connect(lambda: self._onKeyFinished(keyLineEdit.objectName()))
 		self.hLayout.addWidget(keyLineEdit)
 		self.hLayout.addWidget(QLabel(": "))
 		valLineEdit = QLineEdit()
@@ -86,10 +89,30 @@ class SequenceListItem(QWidget):
 		val = valLine.text()
 		key = keyLine.text()
 
-		self.properties[key] = [val, self.properties[key][1]]
+		if isinstance(self.properties[key], list):
+			self.properties[key] = [val, self.properties[key][1]]
+		else:
+			self.properties[key] = [val, '']
 
 		if self.updateCallback is not None and self.listItem is not None:
 			self.updateCallback(self.listItem, key, val)
+
+	def _onKeyFinished(self, e):
+
+		print(e)
+		keyLine = self.findChild(QLineEdit, e)
+		valLine = self.findChild(QLineEdit, e.replace("key", "val"))
+
+		val = valLine.text()
+		key = keyLine.text()
+
+		del self.properties[self._prevKey]
+		self.properties[key] = [val, '']
+
+		if self.updateCallback is not None and self.listItem is not None:
+			self.updateCallback(self.listItem, key, val, True, self._prevKey)
+
+		self._prevKey = key
 
 	def _onValueChanged(self, e):
 

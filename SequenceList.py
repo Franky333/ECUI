@@ -68,17 +68,23 @@ class SequenceList(QListWidget):
 
 
 
-	def createItem(self, objName=None):
+	def createItem(self, objName=None, index=None):
 
 
-		listWidgetItem = QListWidgetItem(self)
+		listWidgetItem = QListWidgetItem()
 		item = SequenceListItem(self.__getNextId(), self.onListItemChanged, listWidgetItem, objName, self)
 
 		# Add QListWidgetItem into QListWidget
-		self.addItem(listWidgetItem)
+		if index is None:
+			self.addItem(listWidgetItem)
+		else:
+			print(index)
+			self.insertItem(index, listWidgetItem)
 		self.setItemWidget(listWidgetItem, item)
 
 		return item
+
+
 
 	def __getNextId(self):
 
@@ -104,14 +110,14 @@ class SequenceList(QListWidget):
 			value = "START"
 		return item, value
 
-	def onListItemChanged(self, item, key, val):
+	def onListItemChanged(self, item, key, val, removeOld=False, oldKey=None):
 
 		index = self.row(item)
 		print(index)
 		timeItem, time = self.getCorrespondingTimestampItem(index)
 		time, succ = Utils.tryParseFloat(time)
 		print(timeItem, time)
-		self.updateCallback(key, val, time)
+		self.updateCallback(key, val, time, None, removeOld, oldKey)
 
 	def keyPressEvent(self, event):
 

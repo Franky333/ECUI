@@ -67,8 +67,12 @@ class SequenceMonitor(QWidget):
 		self.globalsLayout = QGridLayout()
 		self.globals.setLayout(self.globalsLayout)
 
+		self.addButton = QPushButton("Add item")
+		self.addButton.setVisible(False)
+
 		#layout for seqList section
 		self.listLayout = QVBoxLayout()
+		self.listLayout.addWidget(self.addButton)
 		self.listLayout.addWidget(self.listWidget)
 		self.listLayout.insertWidget(0, self.globals)
 
@@ -140,6 +144,10 @@ class SequenceMonitor(QWidget):
 		with open(fname[0]) as jsonFile:
 			self.controller.load(jsonFile.read())
 
+		#set addbutton visible
+		self.addButton.setVisible(True)
+		self.addButton.clicked.connect(self._onAddItem)
+
 		#globals
 		self.loadSeqGlobals()
 		self.listLayout.insertWidget(0, self.globals)
@@ -203,12 +211,14 @@ class SequenceMonitor(QWidget):
 			textFile.write(data)
 
 
-	def updateController(self, currKey, currVal, timeAfter, timeBefore=None):
+	def updateController(self, currKey, currVal, timeAfter, timeBefore=None, removeOld=False, oldKey=None):
 
 		currVal, succ = Utils.tryParseFloat(currVal)
 		currVal, succ = Utils.tryParseInt(currVal)
+		if removeOld:
+			self.controller.removeEntry(timeAfter, oldKey)
 		if timeBefore is not None:
-			self.controller.removeEntry(timeBefore, currKey, currVal)
+			self.controller.removeEntry(timeBefore, currKey)
 
 		if timeAfter is not None:
 			self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
@@ -230,3 +240,8 @@ class SequenceMonitor(QWidget):
 	def _onGlobalChanged(self, e):
 
 		self._currValChange = e
+
+	def _onAddItem(self, e):
+
+		item = self.listWidget.createItem(None, 1)
+		item.addProperty("newItem", 0)
