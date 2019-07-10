@@ -1,11 +1,14 @@
 [
     {
-        "fuel": 0,
+        "fuel": 20,
+        "igniter": 50,
         "oxidizer": 0,
         "timestamp": -20
     },
     {
-        "fuel": "0",
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
         "timestamp": 0.0
     },
     {

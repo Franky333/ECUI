@@ -20,3 +20,17 @@ class Utils():
 			pass
 
 		return val, success
+
+	@staticmethod
+	def tryParseInt(val):
+
+
+		success = False
+		try:
+			f = int(val)
+			val = f
+			success = True
+		except ValueError:
+			pass
+
+		return val, success

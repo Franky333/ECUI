@@ -62,9 +62,15 @@ class SequenceMonitor(QWidget):
 		self.listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
 		self.listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
 
+		#layout for globals
+		self.globals = QWidget()
+		self.globalsLayout = QGridLayout()
+		self.globals.setLayout(self.globalsLayout)
+
 		#layout for seqList section
 		self.listLayout = QVBoxLayout()
 		self.listLayout.addWidget(self.listWidget)
+		self.listLayout.insertWidget(0, self.globals)
 
 		seqList = QWidget()
 		seqList.setLayout(self.listLayout)
@@ -74,10 +80,6 @@ class SequenceMonitor(QWidget):
 
 	#TODO: delete globals section when loading new file
 	def loadSeqGlobals(self):
-		self.globals = QWidget()
-		self.globalsLayout = QGridLayout()
-
-		self.globals.setLayout(self.globalsLayout)
 
 		counter = 0
 		line = 0
@@ -99,17 +101,15 @@ class SequenceMonitor(QWidget):
 					print("globals of length" + len(entry) + "are not supported yet")
 
 			else:
+				print(glob, counter)
 				self._createGlobalElement(glob, entry, line, counter)
 				counter += 2
 				if counter % 4 == 0:
 					line += 1
 					counter = 0
 
-		self.listLayout.insertWidget(0, self.globals)
-
 	def _createGlobalElement(self, name, val, row, col):
 
-		print(name)
 		currLable = QLabel(name + ":")
 		currLine = QLineEdit()
 
@@ -118,6 +118,8 @@ class SequenceMonitor(QWidget):
 		currLine.setText(val)
 		currLine.setValidator(QDoubleValidator())
 		currLine.setObjectName(name + "LineEdit")
+		currLine.textChanged.connect(self._onGlobalChanged)
+		currLine.editingFinished.connect(lambda: self._onGlobalFinished(currLable, currLine))
 
 		self.globalsLayout.addWidget(currLable, row, col)
 		self.globalsLayout.addWidget(currLine, row, col+1)
@@ -126,8 +128,13 @@ class SequenceMonitor(QWidget):
 
 		self.listWidget.clear()
 
-		fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
-		#fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
+		self.listLayout.removeWidget(self.globals)
+		self.globals = QWidget()
+		self.globalsLayout = QGridLayout()
+		self.globals.setLayout(self.globalsLayout)
+
+		#fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
+		fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
 		print(fname)
 
 		with open(fname[0]) as jsonFile:
@@ -135,7 +142,7 @@ class SequenceMonitor(QWidget):
 
 		#globals
 		self.loadSeqGlobals()
-
+		self.listLayout.insertWidget(0, self.globals)
 
 		#data
 		for entry in self.controller.getData():
@@ -156,18 +163,20 @@ class SequenceMonitor(QWidget):
 	def saveSequence(self):
 
 		import re
-		sname = QFileDialog.getSaveFileName(self, "Save file", ".", "*.seq")
-		#sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.seq", 'asdf']
 
 		mode = self.findChild(QComboBox, "exportComboBox").currentText()
 		if mode == "LEGACY":
+
+			#sname = QFileDialog.getSaveFileName(self, "Save file", QDir.currentPath(), "*.json")
+			sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.json", 'asdf']
+
 			jsonStr = self.controller.exportJson(SequenceExportMode.LEGACY)
 			servoFuelStr, servoOxStr = self.controller.exportAdditionalLegacyFiles()
-			dir= re.sub(r"[^/]*\.seq", "", sname[0])
+			dir = re.sub(r"[^/]*\.json", "", sname[0])
 
 			fuelFile = dir + "servo_fuel.json"
 			oxFile = dir + "servo_oxidizer.json"
-			seqFile = sname[0][:-4] + ".json"
+			seqFile = sname[0]
 
 			self._writeToFile(fuelFile, servoFuelStr)
 			self._writeToFile(oxFile, servoOxStr)
@@ -179,6 +188,10 @@ class SequenceMonitor(QWidget):
 			print("\t" + seqFile)
 
 		elif mode == "NEW":
+
+			#sname = QFileDialog.getSaveFileName(self, "Save file", QDir.currentPath(), "*.seq")
+			sname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/asdf.seq", 'asdf']
+
 			jsonStr = self.controller.exportJson(SequenceExportMode.NEW)
 			self._writeToFile(sname[0], jsonStr)
 			print("Wrote Sequence in NEW mode to: ")
@@ -192,12 +205,28 @@ class SequenceMonitor(QWidget):
 
 	def updateController(self, currKey, currVal, timeAfter, timeBefore=None):
 
+		currVal, succ = Utils.tryParseFloat(currVal)
+		currVal, succ = Utils.tryParseInt(currVal)
 		if timeBefore is not None:
 			self.controller.removeEntry(timeBefore, currKey, currVal)
 
 		if timeAfter is not None:
 			self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
 
+	def updateGlobal(self, currKey, currVal):
+
+		currVal, succ = Utils.tryParseFloat(currVal)
+		currVal, succ = Utils.tryParseInt(currVal)
+		self.controller.updateGlobal(currKey, currVal)
+
 	def getController(self):
 
 		return self.controller
+
+	def _onGlobalFinished(self, lable, line):
+
+		self.updateGlobal(lable.text(), line.text())
+
+	def _onGlobalChanged(self, e):
+
+		self._currValChange = e

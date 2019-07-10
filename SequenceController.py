@@ -66,6 +66,18 @@ class SequenceController():
 		currAction = self.getData()[ind]["actions"]
 		currAction[currKey] = currVal
 
+	def updateGlobal(self, currKey, currVal):
+
+		if "min" in currKey:
+			currKey = currKey[3:-1]
+			currKey = currKey[0].lower() + currKey[1:]
+			self._globals[currKey][0] = currVal
+		elif "max" in currKey:
+			currKey = currKey[3:-1]
+			currKey = currKey[0].lower() + currKey[1:]
+			self._globals[currKey][1] = currVal
+		else:
+			self._globals[currKey[:-1]] = currVal
 
 	def isJson(self, str):
 		try:
@@ -103,7 +115,7 @@ class SequenceController():
 		legJson = []
 		for entry in self.getData():
 			stamp = entry["timestamp"]
-			actions = entry["actions"]
+			actions = entry["actions"].copy()
 			if stamp == "START":
 				stamp = self._globals["startTime"]
 			elif stamp == "END":
