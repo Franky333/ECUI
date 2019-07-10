@@ -1,0 +1,61 @@
+{
+    "globals": {
+        "fuelServo": [
+            1160,
+            2200
+        ],
+        "oxidizerServo": [
+            1800,
+            850
+        ],
+        "startTime": -20,
+        "endTime": 30
+    },
+    "data": [
+        {
+            "timestamp": "START",
+            "actions": {
+                "fuel": 0,
+                "oxidizer": 0
+            }
+        },
+        {
+            "timestamp": 0.0,
+            "actions": {
+                "fuel": "0"
+            }
+        },
+        {
+            "timestamp": 10.0,
+            "actions": {
+                "fuel": 100,
+                "igniter": 0,
+                "oxidizer": 100
+            }
+        },
+        {
+            "timestamp": 11.0,
+            "actions": {
+                "fuel": 100,
+                "igniter": 0,
+                "oxidizer": 100
+            }
+        },
+        {
+            "timestamp": 11.5,
+            "actions": {
+                "fuel": 0,
+                "igniter": 0,
+                "oxidizer": 0
+            }
+        },
+        {
+            "timestamp": "END",
+            "actions": {
+                "fuel": 0,
+                "igniter": 0,
+                "oxidizer": 0
+            }
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+[
+    {
+        "fuel": 0,
+        "oxidizer": 0,
+        "timestamp": -20
+    },
+    {
+        "fuel": "0",
+        "timestamp": 0.0
+    },
+    {
+        "fuel": 100,
+        "igniter": 0,
+        "oxidizer": 100,
+        "timestamp": 10.0
+    },
+    {
+        "fuel": 100,
+        "igniter": 0,
+        "oxidizer": 100,
+        "timestamp": 11.0
+    },
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": 11.5
+    },
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": 30
+    }
+]
