@@ -10,7 +10,7 @@ from SequenceController import SequenceController
 
 from utils import *
 
-#TODO: update controller when changing globals
+#TODO: update controller when changing globals and timstamps
 class SequenceMonitor(QWidget):
 
 	def __init__(self, parent=None):
@@ -85,7 +85,6 @@ class SequenceMonitor(QWidget):
 		for glob in globs:
 
 			entry = globs[glob]
-			#TODO: check if entry is array
 			if isinstance(entry, list):
 
 				if len(entry) == 2:
