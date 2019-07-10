@@ -15,7 +15,7 @@ class SequenceListItem(QWidget):
 		if objName is not None:
 			self.setObjectName(objName)
 
-		self.setStyleSheet("background-color: #4F9CFF; border-radius: 3px;")
+		self.setStyleSheet("border-radius: 3px;")
 
 		self.hLayout = QHBoxLayout()
 		self.l = QVBoxLayout()
@@ -28,8 +28,17 @@ class SequenceListItem(QWidget):
 
 		self.properties = {}
 
+		self._theme = {"timestamp": "#4F9CFF", "actions": "#6EAF6E"}
+
 	#TODO: fix rescale when loading sequences (sizehint)
 	def addProperty(self, key, value, unit=""):
+
+		if key == "timestamp":
+			backColor = self._theme["timestamp"]
+		else:
+			backColor = self._theme["actions"]
+
+		self.setStyleSheet(self.styleSheet() + "background-color: " + backColor)
 
 		self.properties[key] = [value, unit]
 		keyLineEdit = QLineEdit(str(key))

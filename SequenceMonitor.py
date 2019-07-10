@@ -10,7 +10,7 @@ from SequenceController import SequenceController
 
 from utils import *
 
-
+#TODO: update controller when changing globals
 class SequenceMonitor(QWidget):
 
 	def __init__(self, parent=None):
@@ -56,13 +56,13 @@ class SequenceMonitor(QWidget):
 	def createSeqList(self):
 
 		# Create ListWidget and add 10 items to move around.
-		self.listWidget = SequenceList(self.updateController)
+		self.listWidget = SequenceList(self.updateController, None, None, self)
 		# Enable drag & drop ordering of items.
 		self.listWidget.setDragDropMode(QAbstractItemView.InternalMove)
 		self.listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
 		self.listWidget.setSizeAdjustPolicy(QListWidget.AdjustToContents)
 
-		#self.loadSequence()
+		#layout for seqList section
 		self.listLayout = QVBoxLayout()
 		self.listLayout.addWidget(self.listWidget)
 
@@ -71,6 +71,57 @@ class SequenceMonitor(QWidget):
 		seqList.setObjectName("seqList")
 
 		return seqList
+
+	#TODO: delete globals section when loading new file
+	def loadSeqGlobals(self):
+		self.globals = QWidget()
+		self.globalsLayout = QGridLayout()
+
+		self.globals.setLayout(self.globalsLayout)
+
+		counter = 0
+		line = 0
+		globs = self.controller.getGlobals()
+		for glob in globs:
+
+			entry = globs[glob]
+			#TODO: check if entry is array
+			if isinstance(entry, list):
+
+				if len(entry) == 2:
+					if counter % 2 != 0:
+						counter += 1
+						line += 1
+					self._createGlobalElement("min" + glob[0].upper() + glob[1:], entry[0], line, counter)
+					self._createGlobalElement("max" + glob[0].upper() + glob[1:], entry[1], line, counter+2)
+					counter = 0
+					line += 1
+				else:
+					print("globals of length" + len(entry) + "are not supported yet")
+
+			else:
+				self._createGlobalElement(glob, entry, line, counter)
+				counter += 2
+				if counter % 4 == 0:
+					line += 1
+					counter = 0
+
+		self.listLayout.insertWidget(0, self.globals)
+
+	def _createGlobalElement(self, name, val, row, col):
+
+		print(name)
+		currLable = QLabel(name + ":")
+		currLine = QLineEdit()
+
+		if isinstance(val, (int, float)):
+			val = str(val)
+		currLine.setText(val)
+		currLine.setValidator(QDoubleValidator())
+		currLine.setObjectName(name + "LineEdit")
+
+		self.globalsLayout.addWidget(currLable, row, col)
+		self.globalsLayout.addWidget(currLine, row, col+1)
 
 	def loadSequence(self):
 
@@ -83,8 +134,14 @@ class SequenceMonitor(QWidget):
 		with open(fname[0]) as jsonFile:
 			self.controller.load(jsonFile.read())
 
+		#globals
+		self.loadSeqGlobals()
+
+
+		#data
 		for entry in self.controller.getData():
 			time = str(entry["timestamp"])
+			#TODO: implement static START timestamp
 			# if time == "START":
 			# 	item = SequenceListItem('', None, None, None, self)
 			# 	self.listLayout.insertWidget(0, item)
@@ -138,5 +195,10 @@ class SequenceMonitor(QWidget):
 
 		if timeBefore is not None:
 			self.controller.removeEntry(timeBefore, currKey, currVal)
-		self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
 
+		if timeAfter is not None:
+			self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
+
+	def getController(self):
+
+		return self.controller

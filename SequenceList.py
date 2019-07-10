@@ -10,6 +10,8 @@ class SequenceList(QListWidget):
 	def __init__(self, updateCallback=None, boundListItem=None, objName=None, parent=None):
 		super(SequenceList, self).__init__(parent)
 
+		self.parent = parent
+
 		self.__nextItemId = 0
 
 		self.updateCallback = updateCallback
@@ -111,4 +113,40 @@ class SequenceList(QListWidget):
 		print(timeItem, time)
 		self.updateCallback(key, val, time)
 
+	def keyPressEvent(self, event):
 
+		if type(event) == QKeyEvent:
+			if event.key() == Qt.Key_Backspace:
+				event.accept()
+				self._removeSel()
+		else:
+			event.ignore()
+
+	def _removeSel(self):
+		listItems = self.selectedItems()
+		if not listItems: return
+		for item in listItems:
+			controller = self.parent.getController()
+
+			index = self.row(item)
+			print(index)
+			timeItem, time = self.getCorrespondingTimestampItem(index)
+			time, succ = Utils.tryParseFloat(time)
+			key, val = self._getProperty(item)
+			self.updateCallback(key, val, None, time)
+
+			self.takeItem(self.row(item))
+
+	def _getProperty(self, item):
+
+		seqItem = self.itemWidget(item)
+
+		lineEdits = seqItem.findChildren(QLineEdit)
+
+		for line in lineEdits:
+			if "keyLineEdit" in line.objectName():
+				key = line.text()
+			elif "valLineEdit" in line.objectName():
+				val = line.text()
+
+		return key, val

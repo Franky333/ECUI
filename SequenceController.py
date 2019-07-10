@@ -44,8 +44,8 @@ class SequenceController():
 	def exportAdditionalLegacyFiles(self):
 
 		if self._loaded:
-			fuel = self._globals["fuel"]
-			ox = self._globals["oxidizer"]
+			fuel = self._globals["fuelServo"]
+			ox = self._globals["oxidizerServo"]
 
 
 			fuelStr = json.dumps(fuel, indent=4)
@@ -56,7 +56,8 @@ class SequenceController():
 	def removeEntry(self, timestamp, currKey, currVal):
 
 		ind = self._stamps[timestamp]
-		self.getData()[ind]["actions"].pop(currKey)
+		if currKey in self.getData()[ind]["actions"]:
+			self.getData()[ind]["actions"].pop(currKey)
 
 
 	def addOrUpdateEntry(self, timestamp, currKey, currVal):
@@ -76,6 +77,10 @@ class SequenceController():
 	def getData(self):
 
 		return self._data
+
+	def getGlobals(self):
+
+		return self._globals
 
 
 	def _reformatJson(self, jsonStr):

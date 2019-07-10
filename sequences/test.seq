@@ -1,7 +1,7 @@
 {
     "globals": {
-        "fuel": [1160, 2200],
-        "oxidizer": [1800, 850],
+        "fuelServo": [1160, 2200],
+        "oxidizerServo": [1800, 850],
         "startTime": -20,
         "endTime": 30
     },
