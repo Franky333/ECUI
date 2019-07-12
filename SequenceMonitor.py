@@ -7,6 +7,7 @@ import json
 from SequenceList import SequenceList
 from SequenceListItem import SequenceListItem
 from SequenceController import SequenceController
+from CountdownTimer import CountdownTimer
 
 from utils import *
 
@@ -27,18 +28,18 @@ class SequenceMonitor(QWidget):
 		hLayout = QHBoxLayout()
 
 
-		self.startSequenceButton = QPushButton("Start Sequence")
-		self.startSequenceButton.setVisible(False)
-		self.startSequenceButton.setStyleSheet("background-color: #E99B00; height: 60px; font-size: 40px;")
-		self.startSequenceButton.clicked.connect(self._onStartSequence)
+		self.toggleSequenceButton = QPushButton("Start Sequence")
+		self.toggleSequenceButton.setVisible(False)
+		self.toggleSequenceButton.setStyleSheet("background-color: #E99B00; height: 60px; font-size: 40px;")
+		self.toggleSequenceButton.clicked.connect(self._onToggleSequence)
 
-		print(self.startSequenceButton)
+
 		self.countDownTimer = QLabel()
 		self.countDownTimer.setVisible(False)
 		self.countDownTimer.setStyleSheet("font-size: 40px; color: #E99B00")
+		self.isSequenceStarted = False
 
-
-		hLayout.addWidget(self.startSequenceButton)
+		hLayout.addWidget(self.toggleSequenceButton)
 		hLayout.addStretch(2)
 		hLayout.addWidget(self.countDownTimer)
 
@@ -190,7 +191,7 @@ class SequenceMonitor(QWidget):
 		#set addbutton visible
 		self.addTimeButton.setVisible(True)
 		self.addActionButton.setVisible(True)
-		self.startSequenceButton.setVisible(True)
+		self.toggleSequenceButton.setVisible(True)
 
 		#globals
 		self.loadSeqGlobals()
@@ -316,11 +317,33 @@ class SequenceMonitor(QWidget):
 
 		item = self.listWidget.createItem("newAction", 0, None, 1)
 
-	def _onStartSequence(self):
+	def _onToggleSequence(self):
 
-		print("go!")
-		self.timer = QTimer()
-		self.timer
+		if not self.isSequenceStarted:
+			self.isSequenceStarted = True
+			self.toggleSequenceButton.setText("Abort Sequence")
+			self.timer = CountdownTimer(self._countdownEvent, self.getStartTime(), 0.1)
+			self.timer.start()
+		else:
+			self.isSequenceStarted = False
+			self._resetTimer()
+
+	def _countdownEvent(self):
+
+		time = self.timer.getTime()
+		self.listWidget.highlightTimestamp(time)
+		self.countDownTimer.setText(str(time))
+		if time >= self.getEndTime():
+			self._resetTimer()
+
+	def _resetTimer(self):
+		self.timer.stop()
+		self.timer.reset()
+		startTime = self.getStartTime()
+		self.toggleSequenceButton.setText("Start Sequence")
+		self.countDownTimer.setText(str(startTime))
+		self.isSequenceStarted = False
+
 
 	def getStartTime(self):
 

@@ -269,6 +269,27 @@ class SequenceList(QListWidget):
 
 		return key, val
 
+	def highlightTimestamp(self, time):
+
+		index, stampIndex = self.getTimestampSlot(time)
+
+
+		if stampIndex == len(self._timestampList)-1:
+			successorInd = self.count()
+		else:
+			successorInd = self._timestampList[stampIndex+1][0]
+
+		print(index, successorInd)
+
+		for i in range(index, successorInd):
+			seqItem = self.itemWidget(self.item(index))
+			pal = QPalette()
+
+			pal.setColor(QPalette.Background, QColor(233, 155, 0, 0))
+			seqItem.setAutoFillBackground(True)
+			seqItem.setPalette(pal)
+			seqItem.update()
+
 	def _timestampListSort(self, timestampList):
 
 		return timestampList.sort(key=lambda val : val[0])

@@ -2,9 +2,9 @@ from RepeatedTimer import RepeatedTimer
 
 
 class CountdownTimer(object):
-        def __init__(self, callback, *args, **kwargs):
-                self.countdown_step = 0.1
-                self.countdown_reset = -10
+        def __init__(self, callback, start, step, *args, **kwargs):
+                self.countdown_step = step
+                self.countdown_reset = start
 
                 self.rt = RepeatedTimer(self.countdown_step, self.__countdownTick)
                 self.countdownTime = self.countdown_reset
