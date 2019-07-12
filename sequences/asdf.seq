@@ -8,7 +8,7 @@
             1800,
             850
         ],
-        "startTime": -20,
+        "startTime": -30,
         "endTime": 30
     },
     "data": [
@@ -19,6 +19,10 @@
                 "igniter": 0,
                 "oxidizer": 0
             }
+        },
+        {
+            "timestamp": -15.0,
+            "actions": {}
         },
         {
             "timestamp": 0.0,

@@ -55,6 +55,7 @@ class SequenceController():
 
 	def removeEntry(self, timestamp, currKey):
 
+		timestamp = self.convertTimestamp(timestamp)
 		ind = self._stamps[timestamp]
 		if currKey in self.getData()[ind]["actions"]:
 			self.getData()[ind]["actions"].pop(currKey)
@@ -62,9 +63,34 @@ class SequenceController():
 
 	def addOrUpdateEntry(self, timestamp, currKey, currVal):
 
+		timestamp = self.convertTimestamp(timestamp)
 		ind = self._stamps[timestamp]
 		currAction = self.getData()[ind]["actions"]
 		currAction[currKey] = currVal
+
+	def convertTimestamp(self, timestamp):
+
+		if timestamp == self.getGlobals()["startTime"]:
+			timestamp = "START"
+		elif timestamp == self.getGlobals()["endTime"]:
+			timestamp = "END"
+
+		return timestamp
+
+	def addTimestamp(self, index, val):
+
+		self.getData().insert(index, {"timestamp": val, "actions": {}})
+		self._stamps[val] = index
+
+	def removeTimestamp(self, timestamp):
+
+		print("remove", timestamp)
+		print(self._stamps)
+		ind = self._stamps[timestamp]
+		self.getData().pop(ind)
+		self._stamps.pop(timestamp)
+		self._fetchStamps()
+		print(self._stamps)
 
 	#TODO: make it clean and move substring stuff to sequence monitor
 	def updateGlobal(self, currKey, currVal):

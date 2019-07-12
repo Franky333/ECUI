@@ -7,7 +7,7 @@ from utils import Utils
 
 class SequenceList(QListWidget):
 
-	def __init__(self, updateCallback=None, boundListItem=None, objName=None, parent=None):
+	def __init__(self, updateCallback=None, updateCallbackTimestamp=None, boundListItem=None, objName=None, parent=None):
 		super(SequenceList, self).__init__(parent)
 
 		self.parent = parent
@@ -16,6 +16,8 @@ class SequenceList(QListWidget):
 		self._timestampList = []
 
 		self.updateCallback = updateCallback
+
+		self.updateCallbackTimestamp = updateCallbackTimestamp
 
 
 	def dragMoveEvent(self, event):
@@ -60,6 +62,15 @@ class SequenceList(QListWidget):
 								if indexToInsert > self._timestampList[timestampInd-1][0] and indexToInsert+1 <= self._timestampList[timestampInd+1][0]:
 									print("drop valid")
 
+									#TODO: OPTIONAL: implement timestamp drag
+									# event.setDropAction(Qt.CopyAction)
+									# super(SequenceList, self).dropEvent(event)
+									#
+									# indAfter = name.currentRow()
+									#
+									# if indBefore > indAfter:
+									# 	updateController(self, currKey, currVal, timeAfter, timeBefore=None, removeOld=False, oldKey=None)
+
 								else:
 									print("drop invalid")
 
@@ -101,24 +112,35 @@ class SequenceList(QListWidget):
 
 	def createTimestampItem(self, time, objName=None, index=None):
 
+		timeVal = time
+
+
 		if index is None:
-			self._timestampList.append([self.count(), time])
+			self._timestampList.append([self.count(), timeVal])
 		else:
 			#EDIT: element can still be inserted after END timestamp (maybe fix)
-			self._timestampList.append([index, time])
-			self._timestampList = self._timestampListSort(self._timestampList)
+			print("before", self._timestampList)
+			self._timestampList.append([index, timeVal])
+			self._timestampList.sort(key=lambda val: (val[0], val[1]))
 
-		item = self.createItem(objName, index)
 
-		item.addProperty("timestamp", time)
+		item = self.createItem("timestamp", time, objName, index)
 
 		return item
 
-	def createItem(self, objName=None, index=None):
+	def setTimeStart(self, start):
+
+		self._timestampList[0][1] = start
+
+	def setTimeEnd(self, end):
+
+		self._timestampList[len(self._timestampList)-1][1] = end
+
+	def createItem(self, key, val, objName=None, index=None):
 
 
 		listWidgetItem = QListWidgetItem()
-		item = SequenceListItem(self.__getNextId(), self.onListItemChanged, listWidgetItem, objName, self)
+		item = SequenceListItem(self.__getNextId(), self.onListItemChanged, self.onListItemChangedTimestep, listWidgetItem, objName, self)
 
 		# Add QListWidgetItem into QListWidget
 		if index is None:
@@ -127,6 +149,12 @@ class SequenceList(QListWidget):
 			print(index)
 			self.insertItem(index, listWidgetItem)
 		self.setItemWidget(listWidgetItem, item)
+
+		item.addProperty(key, val)
+
+		if index is not None:
+			self._updateTimestampList(self.count()-1, index)
+			print("after", self._timestampList)
 
 		return item
 
@@ -155,18 +183,29 @@ class SequenceList(QListWidget):
 			value = "START"
 		return item, value
 
+	def onListItemChangedTimestep(self, item, oldVal, newVal):
+
+		#TODO: not implemented yet (optional)
+		pass
+
 	def onListItemChanged(self, item, key, val, removeOld=False, oldKey=None):
 
 		print(key)
-		if key == "timestamp":
-			print("time")
+		index = self.row(item)
+		print(index)
+		timeItem, time = self.getCorrespondingTimestampItem(index)
+		time, succ = Utils.tryParseFloat(time)
+		print(timeItem, time)
+		self.updateCallback(key, val, time, None, removeOld, oldKey)
+
+	def isValidTimestamp(self, val):
+
+		if self.parent.getStartTime() > val:
+			return -1
+		elif self.parent.getEndTime() < val:
+			return 1
 		else:
-			index = self.row(item)
-			print(index)
-			timeItem, time = self.getCorrespondingTimestampItem(index)
-			time, succ = Utils.tryParseFloat(time)
-			print(timeItem, time)
-			self.updateCallback(key, val, time, None, removeOld, oldKey)
+			return 0
 
 	def keyPressEvent(self, event):
 
@@ -179,18 +218,42 @@ class SequenceList(QListWidget):
 
 	def _removeSel(self):
 		listItems = self.selectedItems()
-		if not listItems: return
+		if not listItems:
+			return
 		for item in listItems:
-			controller = self.parent.getController()
+
+			key, val = self._getProperty(item)
+			val, succ = Utils.tryParseFloat(val)
+			val, succ = Utils.tryParseInt(val)
 
 			index = self.row(item)
-			print(index)
-			timeItem, time = self.getCorrespondingTimestampItem(index)
-			time, succ = Utils.tryParseFloat(time)
-			key, val = self._getProperty(item)
-			self.updateCallback(key, val, None, time)
+			if key == "timestamp":
+				timestampListIndex = self._getTimestampListIndex(val, 1)
+				timeBefore = self._timestampList[timestampListIndex][1]
+				index = self._timestampList[timestampListIndex][0]
+				startIndex = index
+				endIndex = self._timestampList[timestampListIndex+1][0]-1
+				timeAfter = self._timestampList[timestampListIndex-1][1]
+				self.takeItem(self.row(item))
+				for i in range(startIndex, endIndex):
 
-			self.takeItem(self.row(item))
+					actionKey, actionVal = self._getProperty(self.item(i))
+					actionVal, succ = Utils.tryParseFloat(actionVal)
+					actionVal, succ = Utils.tryParseInt(actionVal)
+
+					print(actionKey, actionVal)
+					self.updateCallback(actionKey, actionVal, timeAfter, timeBefore)
+				self._timestampList.pop(timestampListIndex)
+				self.updateCallbackTimestamp(timeBefore)
+
+			else:
+
+				timeItem, time = self.getCorrespondingTimestampItem(index)
+				time, succ = Utils.tryParseFloat(time)
+				self.updateCallback(key, val, None, time)
+				self.takeItem(self.row(item))
+
+			self._updateTimestampList(self.count()-1, index)
 
 	def _getProperty(self, item):
 
@@ -208,7 +271,7 @@ class SequenceList(QListWidget):
 
 	def _timestampListSort(self, timestampList):
 
-		timestampList.sort(key = lambda val : val[0])
+		return timestampList.sort(key=lambda val : val[0])
 
 	def _getTimestampListIndex(self, val, indexOfValueInList=0):
 
@@ -220,13 +283,63 @@ class SequenceList(QListWidget):
 				counter += 1
 		return counter
 
+	def _convertTime(self, time):
+
+		timeVal = time
+		if time == "START":
+			timeVal = self.parent.getStartTime()
+		elif time == "END":
+			timeVal = self.parent.getEndTime()
+
+		return timeVal
+
 	def _updateTimestampList(self, fromIndex, toIndex):
 
-		for x in range(fromIndex, toIndex, -1):
+		for x in range(fromIndex, toIndex-1, -1):
 
 			currItem = self.itemWidget(self.item(x))
 			if "timestamp" in currItem.properties:
 
 				value = currItem.properties["timestamp"][0]
+				print(value)
 				timestampListInd = self._getTimestampListIndex(value, 1)
+				print(self.row(currItem.listItem))
+				print(x)
 				self._timestampList[timestampListInd][0] = x
+
+	def getTimestampSlot(self, val):
+
+		index = stampIndex = -1
+		low = 0
+		high = len(self._timestampList)-1
+
+		while low <= high:
+
+			mid = int((low + high) / 2)
+			midEntry = self._timestampList[mid][1]
+			midp1Entry = self._timestampList[mid+1][1]
+
+			midEntry = self._convertTime(midEntry)
+			midp1Entry = self._convertTime(midp1Entry)
+
+			if midEntry < val and val <= midp1Entry:
+
+				index = self._timestampList[mid+1][0]
+				stampIndex = mid+1
+				break
+
+			elif midEntry < val:
+				low = mid + 1
+			elif midEntry >= val:
+				high = mid - 1
+
+		return index, stampIndex
+
+	def timestampExists(self, val):
+
+		exists = False
+		for timestamp in self._timestampList:
+			if val == timestamp[1]:
+				exists = True
+				break
+		return exists

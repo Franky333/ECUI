@@ -56,7 +56,7 @@ class SequenceMonitor(QWidget):
 	def createSeqList(self):
 
 		# Create ListWidget and add 10 items to move around.
-		self.listWidget = SequenceList(self.updateController, None, None, self)
+		self.listWidget = SequenceList(self.updateController, self.removeControllerTimestamp, None, None, self)
 		# Enable drag & drop ordering of items.
 		self.listWidget.setDragDropMode(QAbstractItemView.InternalMove)
 		self.listWidget.setStyleSheet("background-color: #323232; border-radius: 3px; height:30px")
@@ -161,7 +161,7 @@ class SequenceMonitor(QWidget):
 
 		#data
 		for entry in self.controller.getData():
-			time = str(entry["timestamp"])
+			time = entry["timestamp"]
 			#TODO: implement static START timestamp
 			# if time == "START":
 			# 	item = SequenceListItem('', None, None, None, self)
@@ -171,8 +171,7 @@ class SequenceMonitor(QWidget):
 
 			for val in entry["actions"].keys():
 				if val != "timestamp":
-					item = self.listWidget.createItem()
-					item.addProperty(str(val), str(entry["actions"][val]))
+					item = self.listWidget.createItem(str(val), str(entry["actions"][val]))
 
 
 	#NOTE: legacy export fule and oxidizer file names are hardcoded!!!
@@ -231,11 +230,21 @@ class SequenceMonitor(QWidget):
 		if timeAfter is not None:
 			self.controller.addOrUpdateEntry(timeAfter, currKey, currVal)
 
+	def removeControllerTimestamp(self, timestamp):
+
+		print("remove Timestep")
+		self.controller.removeTimestamp(timestamp)
+
+
 	def updateGlobal(self, currKey, currVal):
 
 		currVal, succ = Utils.tryParseFloat(currVal)
 		currVal, succ = Utils.tryParseInt(currVal)
 		self.controller.updateGlobal(currKey, currVal)
+		if "startTime" in currKey:
+			self.listWidget.setTimeStart(currVal)
+		elif "endTime" in currKey:
+			self.listWidget.setTimeEnd(currVal)
 
 	def getController(self):
 
@@ -251,10 +260,27 @@ class SequenceMonitor(QWidget):
 
 	def _onAddTimestampItem(self, e):
 
-		item = self.listWidget.createItem(None, 1)
-		item.addProperty("timestamp", 0)
+		val, okPressed = QInputDialog.getDouble(self, "new Timestamp", "Value:", 0, self.getStartTime(), self.getEndTime(), 2)
+		if okPressed:
+			print(val)
+			if self.listWidget.timestampExists(val):
+				print("can't add timestamp, already existing")
+			else:
+				slot, stampInd = self.listWidget.getTimestampSlot(val)
+				item = self.listWidget.createTimestampItem(val, None, slot)
+				self.controller.addTimestamp(stampInd, val)
 
 	def _onAddActionItem(self, e):
 
-		item = self.listWidget.createItem(None, 1)
-		item.addProperty("newAction", 0)
+		item = self.listWidget.createItem("newAction", 0, None, 1)
+
+	def getStartTime(self):
+
+		startTime = self.findChild(QLineEdit, "startTimeLineEdit")
+		print(startTime.text())
+		return float(startTime.text())
+
+	def getEndTime(self):
+
+		endTime = self.findChild(QLineEdit, "endTimeLineEdit")
+		return float(endTime.text())

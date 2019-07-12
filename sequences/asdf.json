@@ -6,12 +6,6 @@
         "timestamp": -20
     },
     {
-        "fuel": 0,
-        "igniter": 0,
-        "oxidizer": 0,
-        "timestamp": 0.0
-    },
-    {
         "fuel": 100,
         "igniter": 0,
         "oxidizer": 100,
