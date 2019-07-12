@@ -67,12 +67,19 @@ class SequenceMonitor(QWidget):
 		self.globalsLayout = QGridLayout()
 		self.globals.setLayout(self.globalsLayout)
 
-		self.addButton = QPushButton("Add item")
-		self.addButton.setVisible(False)
+
+		self.addTimeButton = QPushButton("Add timestamp")
+		self.addTimeButton.setVisible(False)
+		self.addTimeButton.clicked.connect(self._onAddTimestampItem)
+
+		self.addActionButton = QPushButton("Add action")
+		self.addActionButton.setVisible(False)
+		self.addActionButton.clicked.connect(self._onAddActionItem)
 
 		#layout for seqList section
 		self.listLayout = QVBoxLayout()
-		self.listLayout.addWidget(self.addButton)
+		self.listLayout.addWidget(self.addTimeButton)
+		self.listLayout.addWidget(self.addActionButton)
 		self.listLayout.addWidget(self.listWidget)
 		self.listLayout.insertWidget(0, self.globals)
 
@@ -145,8 +152,8 @@ class SequenceMonitor(QWidget):
 			self.controller.load(jsonFile.read())
 
 		#set addbutton visible
-		self.addButton.setVisible(True)
-		self.addButton.clicked.connect(self._onAddItem)
+		self.addTimeButton.setVisible(True)
+		self.addActionButton.setVisible(True)
 
 		#globals
 		self.loadSeqGlobals()
@@ -160,12 +167,13 @@ class SequenceMonitor(QWidget):
 			# 	item = SequenceListItem('', None, None, None, self)
 			# 	self.listLayout.insertWidget(0, item)
 			# else:
-			item = self.listWidget.createItem()
-			item.addProperty("timestamp", time)
+			item = self.listWidget.createTimestampItem(time)
+
 			for val in entry["actions"].keys():
 				if val != "timestamp":
 					item = self.listWidget.createItem()
 					item.addProperty(str(val), str(entry["actions"][val]))
+
 
 	#NOTE: legacy export fule and oxidizer file names are hardcoded!!!
 	def saveSequence(self):
@@ -241,7 +249,12 @@ class SequenceMonitor(QWidget):
 
 		self._currValChange = e
 
-	def _onAddItem(self, e):
+	def _onAddTimestampItem(self, e):
 
 		item = self.listWidget.createItem(None, 1)
-		item.addProperty("newItem", 0)
+		item.addProperty("timestamp", 0)
+
+	def _onAddActionItem(self, e):
+
+		item = self.listWidget.createItem(None, 1)
+		item.addProperty("newAction", 0)

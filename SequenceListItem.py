@@ -31,13 +31,19 @@ class SequenceListItem(QWidget):
 
 		self._theme = {"timestamp": "#4F9CFF", "actions": "#6EAF6E"}
 
+	def getItemWidget(self):
+
+		return self.listItem
+
 	#TODO: fix rescale when loading sequences (sizehint)
 	def addProperty(self, key, value, unit=""):
 
 		if key == "timestamp":
 			backColor = self._theme["timestamp"]
+			keyEnabled = False
 		else:
 			backColor = self._theme["actions"]
+			keyEnabled = True
 
 		self.setStyleSheet(self.styleSheet() + "background-color: " + backColor)
 		self._prevKey = key
@@ -45,6 +51,7 @@ class SequenceListItem(QWidget):
 		self.properties[key] = [value, unit]
 		keyLineEdit = QLineEdit(str(key))
 		keyLineEdit.setObjectName("keyLineEdit" + str(self.id))
+		keyLineEdit.setEnabled(keyEnabled)
 		keyLineEdit.editingFinished.connect(lambda: self._onKeyFinished(keyLineEdit.objectName()))
 		self.hLayout.addWidget(keyLineEdit)
 		self.hLayout.addWidget(QLabel(": "))
