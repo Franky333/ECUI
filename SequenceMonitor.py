@@ -22,7 +22,30 @@ class SequenceMonitor(QWidget):
 		header = self.createHeader()
 		seqList = self.createSeqList()
 
+		#sequence Start
+		top = QWidget()
+		hLayout = QHBoxLayout()
+
+
+		self.startSequenceButton = QPushButton("Start Sequence")
+		self.startSequenceButton.setVisible(False)
+		self.startSequenceButton.setStyleSheet("background-color: #E99B00; height: 60px; font-size: 40px;")
+		self.startSequenceButton.clicked.connect(self._onStartSequence)
+
+		print(self.startSequenceButton)
+		self.countDownTimer = QLabel()
+		self.countDownTimer.setVisible(False)
+		self.countDownTimer.setStyleSheet("font-size: 40px; color: #E99B00")
+
+
+		hLayout.addWidget(self.startSequenceButton)
+		hLayout.addStretch(2)
+		hLayout.addWidget(self.countDownTimer)
+
+		top.setLayout(hLayout)
+
 		vLayout = QVBoxLayout()
+		vLayout.addWidget(top)
 		vLayout.addWidget(header)
 		vLayout.addWidget(seqList)
 
@@ -30,8 +53,11 @@ class SequenceMonitor(QWidget):
 
 	def createHeader(self):
 
-		loadButton = QPushButton("Load")
-		loadButton.clicked.connect(self.loadSequence)
+		newButton = QPushButton("New")
+		newButton.clicked.connect(self.newSequence)
+
+		openButton = QPushButton("Open")
+		openButton.clicked.connect(self.openSequence)
 
 		saveButton = QPushButton("Save")
 		saveButton.clicked.connect(self.saveSequence)
@@ -41,9 +67,11 @@ class SequenceMonitor(QWidget):
 		exportComboBox.setObjectName("exportComboBox")
 		exportComboBox.addItem(SequenceExportMode.LEGACY.name)
 		exportComboBox.addItem(SequenceExportMode.NEW.name)
+		exportComboBox.setCurrentIndex(1)
 
 		hLayout = QHBoxLayout()
-		hLayout.addWidget(loadButton)
+		hLayout.addWidget(newButton)
+		hLayout.addWidget(openButton)
 		hLayout.addWidget(saveButton)
 		hLayout.addWidget(QLabel("Export Mode: "))
 		hLayout.addWidget(exportComboBox)
@@ -135,8 +163,20 @@ class SequenceMonitor(QWidget):
 		self.globalsLayout.addWidget(currLable, row, col)
 		self.globalsLayout.addWidget(currLine, row, col+1)
 
-	def loadSequence(self):
 
+	def newSequence(self):
+
+		self.loadSequence("./sequences/new.seq")
+
+	def openSequence(self, path=None):
+
+		fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
+		#fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
+		print(fname)
+		if fname[0] != "":
+			self.loadSequence(fname[0])
+
+	def loadSequence(self, path):
 		self.listWidget.clear()
 
 		self.listLayout.removeWidget(self.globals)
@@ -144,20 +184,21 @@ class SequenceMonitor(QWidget):
 		self.globalsLayout = QGridLayout()
 		self.globals.setLayout(self.globalsLayout)
 
-		#fname = QFileDialog.getOpenFileName(self, "Open file", QDir.currentPath(), "*.seq")
-		fname = ["/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/sequences/test.seq", 'asdf']
-		print(fname)
-
-		with open(fname[0]) as jsonFile:
+		with open(path) as jsonFile:
 			self.controller.load(jsonFile.read())
 
 		#set addbutton visible
 		self.addTimeButton.setVisible(True)
 		self.addActionButton.setVisible(True)
+		self.startSequenceButton.setVisible(True)
 
 		#globals
 		self.loadSeqGlobals()
 		self.listLayout.insertWidget(0, self.globals)
+
+		startTime = self.getStartTime()
+		self.countDownTimer.setText(str(startTime))
+		self.countDownTimer.setVisible(True)
 
 		#data
 		for entry in self.controller.getData():
@@ -243,6 +284,7 @@ class SequenceMonitor(QWidget):
 		self.controller.updateGlobal(currKey, currVal)
 		if "startTime" in currKey:
 			self.listWidget.setTimeStart(currVal)
+			self.countDownTimer.setText(str(currVal))
 		elif "endTime" in currKey:
 			self.listWidget.setTimeEnd(currVal)
 
@@ -273,6 +315,12 @@ class SequenceMonitor(QWidget):
 	def _onAddActionItem(self, e):
 
 		item = self.listWidget.createItem("newAction", 0, None, 1)
+
+	def _onStartSequence(self):
+
+		print("go!")
+		self.timer = QTimer()
+		self.timer
 
 	def getStartTime(self):
 
