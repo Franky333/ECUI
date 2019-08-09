@@ -112,6 +112,7 @@ class SequenceMonitor(QWidget):
 		self.listLayout.addWidget(self.listWidget)
 		self.listLayout.insertWidget(0, self.globals)
 
+
 		seqList = QWidget()
 		seqList.setLayout(self.listLayout)
 		seqList.setObjectName("seqList")
@@ -167,7 +168,7 @@ class SequenceMonitor(QWidget):
 
 	def newSequence(self):
 
-		self.loadSequence("./sequences/new.seq")
+		self.loadSequence("./sequences/test.seq")
 
 	def openSequence(self, path=None):
 
@@ -181,6 +182,13 @@ class SequenceMonitor(QWidget):
 		self.listWidget.clear()
 
 		self.listLayout.removeWidget(self.globals)
+
+		import sip
+		self.globalsLayout.removeWidget(self.globals)
+		sip.delete(self.globals)
+		self.globals = None
+		#self.globalsLayout.setParent(None)
+
 		self.globals = QWidget()
 		self.globalsLayout = QGridLayout()
 		self.globals.setLayout(self.globalsLayout)
@@ -319,6 +327,7 @@ class SequenceMonitor(QWidget):
 
 	def _onToggleSequence(self):
 
+		print(self.getStartTime(), self.getEndTime())
 		if not self.isSequenceStarted:
 			self.isSequenceStarted = True
 			self.toggleSequenceButton.setText("Abort Sequence")

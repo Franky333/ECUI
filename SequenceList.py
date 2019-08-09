@@ -19,6 +19,7 @@ class SequenceList(QListWidget):
 
 		self.updateCallbackTimestamp = updateCallbackTimestamp
 
+		self.currentHighlightIndex = -1
 
 	def dragMoveEvent(self, event):
 		if event.mimeData().hasUrls():
@@ -273,22 +274,31 @@ class SequenceList(QListWidget):
 
 		index, stampIndex = self.getTimestampSlot(time)
 
+		stampIndex -= 1
+		index = self._timestampList[stampIndex][0]
 
-		if stampIndex == len(self._timestampList)-1:
-			successorInd = self.count()
-		else:
-			successorInd = self._timestampList[stampIndex+1][0]
+		if self.currentHighlightIndex != stampIndex:
+			self.currentHighlightIndex = stampIndex
+			if stampIndex == len(self._timestampList)-1:
+				successorInd = self.count()
+			else:
+				successorInd = self._timestampList[stampIndex+1][0]
 
-		print(index, successorInd)
+			print(index, successorInd)
 
-		for i in range(index, successorInd):
-			seqItem = self.itemWidget(self.item(index))
-			pal = QPalette()
+			for i in range(index, successorInd):
+				print(i)
+				listItem = self.item(index)
 
-			pal.setColor(QPalette.Background, QColor(233, 155, 0, 0))
-			seqItem.setAutoFillBackground(True)
-			seqItem.setPalette(pal)
-			seqItem.update()
+
+				listItem.setBackground(QColor("E99B00"))
+
+				# pal = QPalette()
+				#
+				# pal.setColor(QPalette.Background, QColor(233, 155, 0, 255))
+				# seqItem.setAutoFillBackground(True)
+				# seqItem.setPalette(pal)
+				# seqItem.update()
 
 	def _timestampListSort(self, timestampList):
 
