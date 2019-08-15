@@ -240,17 +240,16 @@ class ECUI(QWidget):
 			self.servo_oxidizer.disable()
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
-			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
-			if os.path.isdir("log"): #FIXME: better check maybe even msgbox?
-				with open('log/'+logfilename, 'w', newline='') as csvfile:
-					fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
-					writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
+			logfile_name_dir = 'log/'+logfile_name
+			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
+			with open(logfile_name_dir, 'w', newline='') as logfile:
+				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
+				writer = csv.DictWriter(logfile, fieldnames=fieldnames)
 
-					writer.writeheader()
-					for line in self.loggingvalues:
-						writer.writerow(line)
-			else:
-				print("Error: Please create log directory! | No read premissions.")
+				writer.writeheader()
+				for line in self.loggingvalues:
+					writer.writerow(line)
 			self.loggingvalues.clear()
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)

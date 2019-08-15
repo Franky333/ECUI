@@ -102,3 +102,6 @@ ENV/
 
 # misc
 .idea/
+
+# procect specific
+/log
