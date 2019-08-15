@@ -1,10 +1,8 @@
-
-
 class Relay(object):
-	def __init__(self, hedgehog, port, name):
+	def __init__(self, name, hedgehog, port):
+		self.name = name
 		self.hedgehog = hedgehog
 		self.port = port
-		self.name = name
 		self.enabled = False
 
 	def set(self, enabled):

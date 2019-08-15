@@ -25,21 +25,25 @@ class ECUI(QWidget):
 	def __init__(self, parent=None):
 		super(ECUI, self).__init__(parent)
 
+		# Hedgehog
 		self.stack = ExitStack()
 		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://hedgehog10.local:10789'))  # FIXME
 
-		self.countdownTimer = CountdownTimer(self.countdownEvent)
-		self.sequence = Sequence()
-
+		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
 		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
-		self.relay_igniter_arc = Relay(hedgehog=self.hedgehog, port=0, name='igniter_arc')
-		self.relay_igniter_pyro = Relay(hedgehog=self.hedgehog, port=1, name='igniter_pyro')
+		self.relay_igniter_arc = Relay(name='igniter_arc', hedgehog=self.hedgehog, port=0)
+		self.relay_igniter_pyro = Relay(name='igniter_pyro', hedgehog=self.hedgehog, port=1)
 		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=2)
 		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=3)
 		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=4)
 		self.temperatureSensor_chamber = TemperatureSensor(name='chamber', hedgehog=self.hedgehog, port=8)
 
+		# Countdown Timer and Sequence
+		self.countdownTimer = CountdownTimer(self.countdownEvent)
+		self.sequence = Sequence()
+
+		# Regular Timer
 		self.timer = QTimer()
 		self.timer.setInterval(100)
 		self.timer.timeout.connect(self.__timerTick)
