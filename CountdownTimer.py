@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QTimer
-
+import os
 
 class CountdownTimer(object):
 	def __init__(self, callback, *args, **kwargs):
@@ -18,6 +18,13 @@ class CountdownTimer(object):
 
 	def __countdownTick(self):
 		self.countdownTime = round(self.countdownTime + self.countdown_step, 1)
+		if abs(self.countdownTime - round(self.countdownTime, 0)) < 0.0001:
+			number = round(self.countdownTime, 0)
+			if number <= 0:
+				text = '%d' % (round(-self.countdownTime, 0))
+				print("Countdown: " + text)
+				text = text.replace("0", "ignition")
+				os.system("espeak " + text + " &")
 		self.callback(*self.args, **self.kwargs)
 
 	def start(self):
