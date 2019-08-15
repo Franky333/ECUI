@@ -2,7 +2,8 @@
 import csv
 import datetime
 
-import time, os
+import time
+import os
 
 from hedgehog.client import connect
 from contextlib import ExitStack
@@ -31,6 +32,10 @@ class ECUI(QWidget):
 		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
 		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
 		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
+
+		self.timer = QTimer()
+		self.timer.setInterval(100)
+		self.timer.timeout.connect(self.__timerTick)
 
 		self.inputVoltage = 0.0
 
@@ -193,6 +198,9 @@ class ECUI(QWidget):
 		self.setWindowTitle("Engine Control UI")
 		self.setWindowIcon(QIcon('icon.png'))
 
+		#Timer
+		self.timer.start()
+
 	def closeEvent(self, event):
 		if self.btn_countdownStartStop.text() == "Abort":
 			reply = QMessageBox.question(self, 'Message', "The countdown is running.\nQuit anyways?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -264,6 +272,11 @@ class ECUI(QWidget):
 		else:
 			print("Error: invalid button state")
 
+	def __timerTick(self):
+		voltageNew = self.hedgehog.get_analog(0x80) / 1000
+		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
+		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
+
 	def countdownEvent(self):
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
@@ -291,10 +304,6 @@ class ECUI(QWidget):
 		                           'PressureOxidizer': pressure_oxidizer,
 		                           'PressureChamber': pressure_chamber,
 		                           'TemperatureFuel': temperature_fuel})
-
-		voltageNew = self.hedgehog.get_analog(0x80) / 1000  # FIXME:  move to regular event
-		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
-		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
 
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
