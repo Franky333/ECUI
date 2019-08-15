@@ -29,8 +29,8 @@ class ECUI(QWidget):
 		self.sequence = Sequence()
 		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
 		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
-		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
-		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
+		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
+		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
 
 		self.batteryVoltage = 0.0
 
@@ -243,7 +243,7 @@ class ECUI(QWidget):
 			logfilename = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
 			if os.path.isdir("log"): #FIXME: better check maybe even msgbox?
 				with open('log/'+logfilename, 'w', newline='') as csvfile:
-					fieldnames = ['Timestamp', 'ServoFuel', 'ServoOxidizer', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
+					fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
 					writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
 					writer.writeheader()
@@ -277,13 +277,17 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
-		pressure_fuel = (self.hedgehog.get_analog(0) - 240) * 0.01626  # TODO: move sensors to own class, improve cal, plot measured values
-		pressure_oxidizer = (self.hedgehog.get_analog(1) - 240) * 0.01626
-		pressure_chamber = (self.hedgehog.get_analog(2) - 240) * 0.01626
+		servoPercentageCurrent_fuel = (self.hedgehog.get_analog(0) - 1250) * 0.086956  # TODO: move to servo class, add calibration
+		servoPercentageCurrent_oxidizer = (self.hedgehog.get_analog(1) - 1850) * -0.101010101
+		pressure_fuel = (self.hedgehog.get_analog(2) - 621) * 0.0141  # TODO: move sensors to own class, improve cal, plot measured values
+		pressure_oxidizer = (self.hedgehog.get_analog(3) - 621) * 0.0141
+		pressure_chamber = (self.hedgehog.get_analog(4) - 621) * 0.0141
 		temperature_fuel = (self.hedgehog.get_analog(8) - 384) * 0.18
 		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
-		                           'ServoFuel': self.servo_fuel.getPositionPercent(),
-		                           'ServoOxidizer': self.servo_oxidizer.getPositionPercent(),
+		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionPercent(),
+		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionPercent(),
+		                           'ServoFuelPercentageCurrent': servoPercentageCurrent_fuel,
+		                           'ServoOxidizerPercentageCurrent': servoPercentageCurrent_oxidizer,
 		                           'PressureFuel': pressure_fuel,
 		                           'PressureOxidizer': pressure_oxidizer,
 		                           'PressureChamber': pressure_chamber,
