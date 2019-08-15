@@ -9,49 +9,25 @@
         "fuel": 0,
         "igniter": 0,
         "oxidizer": 0,
-        "timestamp": 0.0
-    },
-    {
-        "fuel": 50,
-        "igniter": 0,
-        "oxidizer": 50,
-        "timestamp": 1.0
-    },
-    {
-        "fuel": 100,
-        "igniter": 100,
-        "oxidizer": 100,
-        "timestamp": 2.0
+        "timestamp": 0
     },
     {
         "fuel": 100,
         "igniter": 0,
         "oxidizer": 100,
-        "timestamp": 2.1
+        "timestamp": 0.5
     },
     {
         "fuel": 100,
         "igniter": 0,
         "oxidizer": 100,
-        "timestamp": 4.0
-    },
-    {
-        "fuel": 0,
-        "igniter": 0,
-        "oxidizer": 100,
-        "timestamp": 4.2
-    },
-    {
-        "fuel": 0,
-        "igniter": 0,
-        "oxidizer": 100,
-        "timestamp": 4.3
+        "timestamp": 10.0
     },
     {
         "fuel": 0,
         "igniter": 0,
         "oxidizer": 0,
-        "timestamp": 4.5
+        "timestamp": 10.5
     },
     {
         "fuel": 0,
