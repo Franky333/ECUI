@@ -7,6 +7,7 @@ import os
 
 from hedgehog.client import connect
 from contextlib import ExitStack
+from SimulatedHedgehog import SimulatedHedgehog
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -28,6 +29,9 @@ class ECUI(QWidget):
 		# Hedgehog
 		self.stack = ExitStack()
 		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://hedgehog10.local:10789'))  # FIXME
+
+		# Simulated Hedgehog
+		#self.hedgehog = SimulatedHedgehog()
 
 		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
@@ -349,8 +353,8 @@ class ECUI(QWidget):
 
 	def manualControlIgniterEnable(self):
 		print("Manual Igniter ON")
-		self.relay_igniter_arc.set(False)
-		self.relay_igniter_pyro.set(False)
+		self.relay_igniter_arc.set(True)
+		self.relay_igniter_pyro.set(True)
 
 	def manualControlIgniterDisable(self):
 		print("Manual Igniter OFF")
