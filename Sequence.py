@@ -100,7 +100,7 @@ class Sequence(object):
 
 	def loadSequence(self):
 		print("loading sequence from file")
-		with open('config/sequence.json', 'r') as f:
+		with open('sequence/sequence.json', 'r') as f:
 			self.sequence = json.load(f)
 
 	def setStatus(self, status):
