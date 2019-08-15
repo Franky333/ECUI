@@ -30,8 +30,8 @@ class ECUI(QWidget):
 		self.sequence = Sequence()
 		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
 		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
-		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
-		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
+		self.relay_igniter_arc = Relay(hedgehog=self.hedgehog, port=0, name='igniter_arc')
+		self.relay_igniter_pyro = Relay(hedgehog=self.hedgehog, port=1, name='igniter_pyro')
 
 		self.timer = QTimer()
 		self.timer.setInterval(100)
@@ -281,7 +281,8 @@ class ECUI(QWidget):
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
-		self.relay_igniter.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.relay_igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.relay_igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.label_manualControlFuel.setText("Fuel: %d%%" % self.servo_fuel.getPositionPercent())
 		self.label_manualControlOxidizer.setText("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent())
@@ -340,11 +341,13 @@ class ECUI(QWidget):
 
 	def manualControlIgniterEnable(self):
 		print("Manual Igniter ON")
-		self.relay_igniter.set(True)
+		self.relay_igniter_arc.set(False)
+		self.relay_igniter_pyro.set(False)
 
 	def manualControlIgniterDisable(self):
 		print("Manual Igniter OFF")
-		self.relay_igniter.set(False)
+		self.relay_igniter_arc.set(False)
+		self.relay_igniter_pyro.set(False)
 
 	def manualControlIgniterEnableDisable(self):
 		if self.checkbox_manualControlIgniter.isChecked():
