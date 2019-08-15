@@ -1,4 +1,4 @@
-from RepeatedTimer import RepeatedTimer
+from PyQt5.QtCore import QTimer
 
 
 class CountdownTimer(object):
@@ -6,7 +6,10 @@ class CountdownTimer(object):
 		self.countdown_step = 0.1
 		self.countdown_reset = -10
 
-		self.rt = RepeatedTimer(self.countdown_step, self.__countdownTick)
+		self.timer = QTimer()
+		self.timer.setInterval(self.countdown_step * 1000)
+		self.timer.timeout.connect(self.__countdownTick)
+
 		self.countdownTime = self.countdown_reset
 
 		self.callback = callback
@@ -18,13 +21,13 @@ class CountdownTimer(object):
 		self.callback(*self.args, **self.kwargs)
 
 	def start(self):
-		self.rt.start()
+		self.timer.start()
 
 	def stop(self):
-		self.rt.stop()
+		self.timer.stop()
 
 	def reset(self):
-		self.rt.stop()
+		self.timer.stop()
 		self.countdownTime = self.countdown_reset
 
 	def getTime(self):
