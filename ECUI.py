@@ -28,8 +28,8 @@ class ECUI(QWidget):
 
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
 		self.sequence = Sequence()
-		self.servo_fuel = Servo(hedgehog=self.hedgehog, port=0, name='fuel')
-		self.servo_oxidizer = Servo(hedgehog=self.hedgehog, port=1, name='oxidizer')
+		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
+		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
 		self.relay_igniter_arc = Relay(hedgehog=self.hedgehog, port=0, name='igniter_arc')
 		self.relay_igniter_pyro = Relay(hedgehog=self.hedgehog, port=1, name='igniter_pyro')
 
@@ -81,7 +81,7 @@ class ECUI(QWidget):
 		self.checkbox_manualControlIgniter.resize(self.checkbox_manualControlIgniter.sizeHint())
 		self.checkbox_manualControlIgniter.setEnabled(False)
 
-		self.label_manualControlFuel = QLabel("Fuel: %d" % self.servo_fuel.getPositionPercent(), self)
+		self.label_manualControlFuel = QLabel("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()), self)
 		self.slider_manualControlFuel = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlFuel.setToolTip("Fuel Manual Control")
 		self.slider_manualControlFuel.setRange(0, 100)
@@ -92,7 +92,7 @@ class ECUI(QWidget):
 		self.layout_manualControlFuel.addWidget(self.label_manualControlFuel)
 		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel)
 
-		self.label_manualControlOxidizer = QLabel("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent(), self)
+		self.label_manualControlOxidizer = QLabel("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()), self)
 		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlOxidizer.setToolTip("Oxidizer Manual Control")
 		self.slider_manualControlOxidizer.setRange(0, 100)
@@ -127,7 +127,7 @@ class ECUI(QWidget):
 		self.spinbox_cal_fuel.setMinimum(500)
 		self.spinbox_cal_fuel.setMaximum(2500)
 		self.spinbox_cal_fuel.setSingleStep(1)
-		self.spinbox_cal_fuel.setValue(self.servo_fuel.getPositionUs())
+		self.spinbox_cal_fuel.setValue(self.servo_fuel.getPositionTargetUs())
 		self.spinbox_cal_fuel.setEnabled(False)
 		self.spinbox_cal_fuel.valueChanged.connect(self.calFuelValueChanged)
 
@@ -149,7 +149,7 @@ class ECUI(QWidget):
 		self.spinbox_cal_oxidizer.setMinimum(500)
 		self.spinbox_cal_oxidizer.setMaximum(2500)
 		self.spinbox_cal_oxidizer.setSingleStep(1)
-		self.spinbox_cal_oxidizer.setValue(self.servo_oxidizer.getPositionUs())
+		self.spinbox_cal_oxidizer.setValue(self.servo_oxidizer.getPositionTargetUs())
 		self.spinbox_cal_oxidizer.setEnabled(False)
 		self.spinbox_cal_oxidizer.valueChanged.connect(self.calOxidizerValueChanged)
 
@@ -243,11 +243,11 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Reset and Save Log")
 			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-			time.sleep(1) # FIXME: wait for servos to close valves
+			time.sleep(1)  # FIXME: wait for servos to close valves
 			self.servo_fuel.disable()
 			self.servo_oxidizer.disable()
 
-		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
+		elif self.btn_countdownStartStop.text() == "Reset and Save Log":  # TODO: move logging to own class
 			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
 			logfile_name_dir = 'log/'+logfile_name
 			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
@@ -276,31 +276,31 @@ class ECUI(QWidget):
 		voltageNew = self.hedgehog.get_analog(0x80) / 1000
 		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
 		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
 
 	def countdownEvent(self):
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
-		self.servo_fuel.setPositionPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
-		self.servo_oxidizer.setPositionPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
+		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
+		self.servo_oxidizer.setPositionTargetPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.relay_igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.relay_igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.label_manualControlFuel.setText("Fuel: %d%%" % self.servo_fuel.getPositionPercent())
-		self.label_manualControlOxidizer.setText("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent())
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
 		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
-		servoPercentageCurrent_fuel = (self.hedgehog.get_analog(0) - 1250) * 0.086956  # TODO: move to servo class, add calibration
-		servoPercentageCurrent_oxidizer = (self.hedgehog.get_analog(1) - 1850) * -0.101010101
 		pressure_fuel = (self.hedgehog.get_analog(2) - 621) * 0.0141  # TODO: move sensors to own class, improve cal, plot measured values
 		pressure_oxidizer = (self.hedgehog.get_analog(3) - 621) * 0.0141
 		pressure_chamber = (self.hedgehog.get_analog(4) - 621) * 0.0141
 		temperature_fuel = (self.hedgehog.get_analog(8) - 384) * 0.18
 		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
-		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionPercent(),
-		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionPercent(),
-		                           'ServoFuelPercentageCurrent': servoPercentageCurrent_fuel,
-		                           'ServoOxidizerPercentageCurrent': servoPercentageCurrent_oxidizer,
+		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionTargetPercent(),
+		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionTargetPercent(),
+		                           'ServoFuelPercentageCurrent': self.servo_fuel.getPositionCurrentPercent(),
+		                           'ServoOxidizerPercentageCurrent': self.servo_oxidizer.getPositionCurrentPercent(),
 		                           'PressureFuel': pressure_fuel,
 		                           'PressureOxidizer': pressure_oxidizer,
 		                           'PressureChamber': pressure_chamber,
@@ -333,7 +333,7 @@ class ECUI(QWidget):
 		self.btn_countdownStartStop.setEnabled(True)
 		self.checkbox_calibration.setEnabled(True)
 
-	def manualControlEnableDisable(self):  # TODO: rename to checkbox_manualControl_onClick, same for other callbacks
+	def manualControlEnableDisable(self):  # TODO: rename to __checkbox_manualControl_onClick, same for other callbacks
 		if self.checkbox_manualControl.isChecked():
 			self.manualControlEnable()
 		else:
@@ -357,13 +357,13 @@ class ECUI(QWidget):
 
 	def manualControlFuelChange(self):
 		print("Manuel Fuel Changed")
-		self.servo_fuel.setPositionPercent(self.slider_manualControlFuel.value())
-		self.label_manualControlFuel.setText("Fuel: %d%%" % self.servo_fuel.getPositionPercent())
+		self.servo_fuel.setPositionTargetPercent(self.slider_manualControlFuel.value())
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
 
 	def manualControlOxidizerChange(self):
 		print("Manuel Oxidizer Changed")
-		self.servo_oxidizer.setPositionPercent(self.slider_manualControlOxidizer.value())
-		self.label_manualControlOxidizer.setText("Oxidizer: %d%%" % self.servo_oxidizer.getPositionPercent())
+		self.servo_oxidizer.setPositionTargetPercent(self.slider_manualControlOxidizer.value())
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
 
 	def calibrationEnable(self):
 		print("Calibration Mode Enabled")
@@ -404,30 +404,30 @@ class ECUI(QWidget):
 
 	def calFuelValueChanged(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_fuel.setPositionUs(self.spinbox_cal_fuel.value())
+			self.servo_fuel.setPositionTargetUs(self.spinbox_cal_fuel.value())
 
 	def calOxidizerValueChanged(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_oxidizer.setPositionUs(self.spinbox_cal_oxidizer.value())
+			self.servo_oxidizer.setPositionTargetUs(self.spinbox_cal_oxidizer.value())
 
 	def calFuelSetMin(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_fuel.setMinUs(self.spinbox_cal_fuel.value())
+			self.servo_fuel.calMin()
 			self.label_cal_fuel.setText("Fuel (min=%dus, max=%dus)" % (self.servo_fuel.getMinUs(), self.servo_fuel.getMaxUs()))
 
 	def calFuelSetMax(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_fuel.setMaxUs(self.spinbox_cal_fuel.value())
+			self.servo_fuel.calMax()
 			self.label_cal_fuel.setText("Fuel (min=%dus, max=%dus)" % (self.servo_fuel.getMinUs(), self.servo_fuel.getMaxUs()))
 
 	def calOxidizerSetMin(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_oxidizer.setMinUs(self.spinbox_cal_oxidizer.value())
+			self.servo_oxidizer.calMin()
 			self.label_cal_oxidizer.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
 
 	def calOxidizerSetMax(self):
 		if self.checkbox_calibration.isChecked():
-			self.servo_oxidizer.setMaxUs(self.spinbox_cal_oxidizer.value())
+			self.servo_oxidizer.calMax()
 			self.label_cal_oxidizer.setText("Oxidizer (min=%dus, max=%dus)" % (self.servo_oxidizer.getMinUs(), self.servo_oxidizer.getMaxUs()))
 
 
