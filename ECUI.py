@@ -17,6 +17,8 @@ from Relay import Relay
 from Sequence import Sequence
 from SequencePlot import SequencePlot
 from Servo import Servo
+from PressureSensor import PressureSensor
+from TemperatureSensor import  TemperatureSensor
 
 
 class ECUI(QWidget):
@@ -28,10 +30,15 @@ class ECUI(QWidget):
 
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
 		self.sequence = Sequence()
+
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
 		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
 		self.relay_igniter_arc = Relay(hedgehog=self.hedgehog, port=0, name='igniter_arc')
 		self.relay_igniter_pyro = Relay(hedgehog=self.hedgehog, port=1, name='igniter_pyro')
+		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=2)
+		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=3)
+		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=4)
+		self.temperatureSensor_chamber = TemperatureSensor(name='chamber', hedgehog=self.hedgehog, port=8)
 
 		self.timer = QTimer()
 		self.timer.setInterval(100)
@@ -247,18 +254,19 @@ class ECUI(QWidget):
 			self.servo_fuel.disable()
 			self.servo_oxidizer.disable()
 
-		elif self.btn_countdownStartStop.text() == "Reset and Save Log":  # TODO: move logging to own class
-			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"
+		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
+
+			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"  # TODO: move logging to own class
 			logfile_name_dir = 'log/'+logfile_name
 			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
 			with open(logfile_name_dir, 'w', newline='') as logfile:
-				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureFuel']
+				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureChamber']
 				writer = csv.DictWriter(logfile, fieldnames=fieldnames)
-
 				writer.writeheader()
 				for line in self.loggingvalues:
 					writer.writerow(line)
 			self.loggingvalues.clear()
+
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)
 			self.countdownTimer.reset()
@@ -292,19 +300,15 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
-		pressure_fuel = (self.hedgehog.get_analog(2) - 621) * 0.0141  # TODO: move sensors to own class, improve cal, plot measured values
-		pressure_oxidizer = (self.hedgehog.get_analog(3) - 621) * 0.0141
-		pressure_chamber = (self.hedgehog.get_analog(4) - 621) * 0.0141
-		temperature_fuel = (self.hedgehog.get_analog(8) - 384) * 0.18
 		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
 		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionTargetPercent(),
 		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionTargetPercent(),
 		                           'ServoFuelPercentageCurrent': self.servo_fuel.getPositionCurrentPercent(),
 		                           'ServoOxidizerPercentageCurrent': self.servo_oxidizer.getPositionCurrentPercent(),
-		                           'PressureFuel': pressure_fuel,
-		                           'PressureOxidizer': pressure_oxidizer,
-		                           'PressureChamber': pressure_chamber,
-		                           'TemperatureFuel': temperature_fuel})
+		                           'PressureFuel': self.pressureSensor_fuel.getValue(),
+		                           'PressureOxidizer': self.pressureSensor_oxidizer.getValue(),
+		                           'PressureChamber': self.pressureSensor_chamber.getValue(),
+		                           'TemperatureChamber': self.temperatureSensor_chamber.getValue()})
 
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
