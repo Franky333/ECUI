@@ -23,7 +23,7 @@ class ECUI(QWidget):
 		super(ECUI, self).__init__(parent)
 
 		self.stack = ExitStack()
-		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
+		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://hedgehog10.local:10789'))  # FIXME
 
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
 		self.sequence = Sequence()
@@ -32,7 +32,7 @@ class ECUI(QWidget):
 		#self.relay_igniter = Relay(hedgehog=self.hedgehog, port=0, name='igniter')  # Arc
 		self.relay_igniter = Relay(hedgehog=self.hedgehog, port=1, name='igniter')  # Pyro
 
-		self.batteryVoltage = 0.0
+		self.inputVoltage = 0.0
 
 		self.loggingvalues = []
 
@@ -45,9 +45,9 @@ class ECUI(QWidget):
 		self.label_countdownClock.setStyleSheet('color: #000000')
 		self.label_countdownClock.setToolTip("Countdown Clock")
 
-		self.label_batteryVoltage = QLabel("0.0V", self)
-		self.label_batteryVoltage.setStyleSheet('color: #000000')
-		self.label_batteryVoltage.setToolTip("Battery Voltage")
+		self.label_inputVoltage = QLabel("Input Voltage: 0.0V", self)
+		self.label_inputVoltage.setStyleSheet('color: #000000')
+		self.label_inputVoltage.setToolTip("Input Voltage")
 
 		self.btn_countdownStartStop = QPushButton("Start", self)
 		self.btn_countdownStartStop.setToolTip("Start the Countdown")
@@ -56,7 +56,7 @@ class ECUI(QWidget):
 		self.btn_countdownStartStop.setStyleSheet('background-color: #00ff00;')
 
 		self.layout_countdown = QHBoxLayout()
-		self.layout_countdown.addWidget(self.label_batteryVoltage)
+		self.layout_countdown.addWidget(self.label_inputVoltage)
 		self.layout_countdown.addWidget(self.label_countdownClock)
 		self.layout_countdown.addWidget(self.btn_countdownStartStop)
 
@@ -294,8 +294,8 @@ class ECUI(QWidget):
 		                           'TemperatureFuel': temperature_fuel})
 
 		voltageNew = self.hedgehog.get_analog(0x80) / 1000  # FIXME:  move to regular event
-		self.batteryVoltage = self.batteryVoltage * 0.6 + voltageNew * 0.4
-		self.label_batteryVoltage.setText("Battery: %.1fV" % self.batteryVoltage)
+		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
+		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
 
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
