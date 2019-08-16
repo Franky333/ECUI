@@ -14,12 +14,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from CountdownTimer import CountdownTimer
-from Relay import Relay
+from Igniter import Igniter
 from Sequence import Sequence
 from SequencePlot import SequencePlot
 from Servo import Servo
 from PressureSensor import PressureSensor
-from TemperatureSensor import  TemperatureSensor
+from TemperatureSensor import TemperatureSensor
 
 
 class ECUI(QWidget):
@@ -36,8 +36,8 @@ class ECUI(QWidget):
 		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
 		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
-		self.relay_igniter_arc = Relay(name='igniter_arc', hedgehog=self.hedgehog, port=0)
-		self.relay_igniter_pyro = Relay(name='igniter_pyro', hedgehog=self.hedgehog, port=1)
+		self.igniter_arc = Igniter(name='arc', hedgehog=self.hedgehog, igniterPort=0)
+		self.igniter_pyro = Igniter(name='pyro', hedgehog=self.hedgehog, igniterPort=1, feedbackPort=7)
 		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=2)
 		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=3)
 		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=4)
@@ -54,7 +54,7 @@ class ECUI(QWidget):
 
 		self.inputVoltage = 0.0
 
-		self.loggingvalues = []
+		self.loggingValues = []
 
 		# Main tab
 		self.tab_main = QWidget()
@@ -76,14 +76,14 @@ class ECUI(QWidget):
 		self.btn_countdownStartStop.setStyleSheet('background-color: #00ff00;')
 
 		self.layout_countdown = QHBoxLayout()
-		self.layout_countdown.addWidget(self.label_inputVoltage)
-		self.layout_countdown.addWidget(self.label_countdownClock)
-		self.layout_countdown.addWidget(self.btn_countdownStartStop)
+		self.layout_countdown.addWidget(self.label_inputVoltage, alignment=Qt.AlignLeft)
+		self.layout_countdown.addWidget(self.label_countdownClock, alignment=Qt.AlignCenter)
+		self.layout_countdown.addWidget(self.btn_countdownStartStop, alignment=Qt.AlignRight)
 
 		self.tab_main.layout.addLayout(self.layout_countdown)
 
 		self.sequencePlot = SequencePlot(self, sequence=self.sequence, countdownTimer=self.countdownTimer, width=5, height=4)
-		self.tab_main.layout.addWidget(self.sequencePlot)
+		self.tab_main.layout.addWidget(self.sequencePlot, alignment=Qt.AlignTop)
 
 		self.checkbox_manualControl = QCheckBox("Manual Control", self)
 		self.checkbox_manualControl.setToolTip("Enable Manual Control")
@@ -104,8 +104,8 @@ class ECUI(QWidget):
 		self.slider_manualControlFuel.resize(self.slider_manualControlFuel.sizeHint())
 		self.slider_manualControlFuel.setEnabled(False)
 		self.layout_manualControlFuel = QVBoxLayout()
-		self.layout_manualControlFuel.addWidget(self.label_manualControlFuel)
-		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel)
+		self.layout_manualControlFuel.addWidget(self.label_manualControlFuel, alignment=Qt.AlignLeft)
+		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel, alignment=Qt.AlignTop)
 
 		self.label_manualControlOxidizer = QLabel("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()), self)
 		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
@@ -115,12 +115,12 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.resize(self.slider_manualControlOxidizer.sizeHint())
 		self.slider_manualControlOxidizer.setEnabled(False)
 		self.layout_manualControlOxidizer = QVBoxLayout()
-		self.layout_manualControlOxidizer.addWidget(self.label_manualControlOxidizer)
-		self.layout_manualControlOxidizer.addWidget(self.slider_manualControlOxidizer)
+		self.layout_manualControlOxidizer.addWidget(self.label_manualControlOxidizer, alignment=Qt.AlignLeft)
+		self.layout_manualControlOxidizer.addWidget(self.slider_manualControlOxidizer, alignment=Qt.AlignTop)
 
 		self.layout_manualControl = QVBoxLayout()
-		self.layout_manualControl.addWidget(self.checkbox_manualControl)
-		self.layout_manualControl.addWidget(self.checkbox_manualControlIgniter)
+		self.layout_manualControl.addWidget(self.checkbox_manualControl, alignment=Qt.AlignLeft)
+		self.layout_manualControl.addWidget(self.checkbox_manualControlIgniter, alignment=Qt.AlignLeft)
 		self.layout_manualControl.addLayout(self.layout_manualControlFuel)
 		self.layout_manualControl.addLayout(self.layout_manualControlOxidizer)
 
@@ -181,19 +181,19 @@ class ECUI(QWidget):
 		self.btn_cal_oxidizer_max.resize(self.btn_cal_oxidizer_max.sizeHint())
 
 		self.layout_calibration_fuel = QHBoxLayout()
-		self.layout_calibration_fuel.addWidget(self.label_cal_fuel)
-		self.layout_calibration_fuel.addWidget(self.spinbox_cal_fuel)
-		self.layout_calibration_fuel.addWidget(self.btn_cal_fuel_min)
-		self.layout_calibration_fuel.addWidget(self.btn_cal_fuel_max)
+		self.layout_calibration_fuel.addWidget(self.label_cal_fuel, alignment=Qt.AlignTop)
+		self.layout_calibration_fuel.addWidget(self.spinbox_cal_fuel, alignment=Qt.AlignTop)
+		self.layout_calibration_fuel.addWidget(self.btn_cal_fuel_min, alignment=Qt.AlignTop)
+		self.layout_calibration_fuel.addWidget(self.btn_cal_fuel_max, alignment=Qt.AlignTop)
 
 		self.layout_calibration_oxidizer = QHBoxLayout()
-		self.layout_calibration_oxidizer.addWidget(self.label_cal_oxidizer)
-		self.layout_calibration_oxidizer.addWidget(self.spinbox_cal_oxidizer)
-		self.layout_calibration_oxidizer.addWidget(self.btn_cal_oxidizer_min)
-		self.layout_calibration_oxidizer.addWidget(self.btn_cal_oxidizer_max)
+		self.layout_calibration_oxidizer.addWidget(self.label_cal_oxidizer, alignment=Qt.AlignTop)
+		self.layout_calibration_oxidizer.addWidget(self.spinbox_cal_oxidizer, alignment=Qt.AlignTop)
+		self.layout_calibration_oxidizer.addWidget(self.btn_cal_oxidizer_min, alignment=Qt.AlignTop)
+		self.layout_calibration_oxidizer.addWidget(self.btn_cal_oxidizer_max, alignment=Qt.AlignTop)
 
 		self.layout_calibration = QVBoxLayout()
-		self.layout_calibration.addWidget(self.checkbox_calibration)
+		self.layout_calibration.addWidget(self.checkbox_calibration, alignment=Qt.AlignTop)
 		self.layout_calibration.addLayout(self.layout_calibration_fuel)
 		self.layout_calibration.addLayout(self.layout_calibration_oxidizer)
 
@@ -207,7 +207,7 @@ class ECUI(QWidget):
 
 		# Window
 		self.layout = QVBoxLayout(self)
-		self.layout.addWidget(self.tabs)
+		self.layout.addWidget(self.tabs, alignment=Qt.AlignTop)
 		self.setLayout(self.layout)
 		self.setGeometry(500, 200, 900, 700)
 		self.setWindowTitle("Engine Control UI")
@@ -271,9 +271,9 @@ class ECUI(QWidget):
 				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureChamber']
 				writer = csv.DictWriter(logfile, fieldnames=fieldnames)
 				writer.writeheader()
-				for line in self.loggingvalues:
+				for line in self.loggingValues:
 					writer.writerow(line)
-			self.loggingvalues.clear()
+			self.loggingValues.clear()
 
 			self.checkbox_calibration.setEnabled(True)
 			self.checkbox_manualControl.setEnabled(True)
@@ -294,13 +294,18 @@ class ECUI(QWidget):
 		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
+		if self.igniter_pyro.getArmed() is not None:
+			if self.igniter_pyro.getArmed() is True:
+				self.checkbox_manualControlIgniter.setText("Igniter (Armed)")
+			else:
+				self.checkbox_manualControlIgniter.setText("Igniter (Disarmed)")
 
 	def countdownEvent(self):
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionTargetPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
-		self.relay_igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.relay_igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
@@ -308,7 +313,7 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
-		self.loggingvalues.append({'Timestamp': self.countdownTimer.getTime(),
+		self.loggingValues.append({'Timestamp': self.countdownTimer.getTime(),
 		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionTargetPercent(),
 		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionTargetPercent(),
 		                           'ServoFuelPercentageCurrent': self.servo_fuel.getPositionCurrentPercent(),
@@ -353,13 +358,13 @@ class ECUI(QWidget):
 
 	def manualControlIgniterEnable(self):
 		print("Manual Igniter ON")
-		self.relay_igniter_arc.set(True)
-		self.relay_igniter_pyro.set(True)
+		self.igniter_arc.set(True)
+		self.igniter_pyro.set(True)
 
 	def manualControlIgniterDisable(self):
 		print("Manual Igniter OFF")
-		self.relay_igniter_arc.set(False)
-		self.relay_igniter_pyro.set(False)
+		self.igniter_arc.set(False)
+		self.igniter_pyro.set(False)
 
 	def manualControlIgniterEnableDisable(self):
 		if self.checkbox_manualControlIgniter.isChecked():
