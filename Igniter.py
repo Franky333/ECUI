@@ -23,4 +23,4 @@ class Igniter(object):
 		if self.feedbackPort is None:
 			return None
 		else:
-			return self.hedgehog.get_analog(self.feedbackPort) < 2048
+			return self.hedgehog.get_analog(self.feedbackPort) < 2000

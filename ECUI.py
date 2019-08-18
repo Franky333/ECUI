@@ -28,7 +28,7 @@ class ECUI(QWidget):
 
 		# Hedgehog
 		self.stack = ExitStack()
-		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://hedgehog10.local:10789'))  # FIXME
+		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
 
 		# Simulated Hedgehog
 		#self.hedgehog = SimulatedHedgehog()
@@ -96,7 +96,7 @@ class ECUI(QWidget):
 		self.checkbox_manualControlIgniter.resize(self.checkbox_manualControlIgniter.sizeHint())
 		self.checkbox_manualControlIgniter.setEnabled(False)
 
-		self.label_manualControlFuel = QLabel("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()), self)
+		self.label_manualControlFuel = QLabel("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()), self)
 		self.slider_manualControlFuel = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlFuel.setToolTip("Fuel Manual Control")
 		self.slider_manualControlFuel.setRange(0, 100)
@@ -107,7 +107,7 @@ class ECUI(QWidget):
 		self.layout_manualControlFuel.addWidget(self.label_manualControlFuel, alignment=Qt.AlignLeft)
 		self.layout_manualControlFuel.addWidget(self.slider_manualControlFuel, alignment=Qt.AlignTop)
 
-		self.label_manualControlOxidizer = QLabel("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()), self)
+		self.label_manualControlOxidizer = QLabel("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()), self)
 		self.slider_manualControlOxidizer = QSlider(Qt.Horizontal)  # FIXME: buggy when slided manually, goes out of range or doesnt reach limits
 		self.slider_manualControlOxidizer.setToolTip("Oxidizer Manual Control")
 		self.slider_manualControlOxidizer.setRange(0, 100)
@@ -239,9 +239,9 @@ class ECUI(QWidget):
 	def countdownStartStopReset(self):
 		if self.btn_countdownStartStop.text() == "Start":
 			self.checkbox_calibration.setEnabled(False)
-			self.calibrationDisable()
+			self.calibrationDisable()  # FIXME: takes long
 			self.checkbox_manualControl.setEnabled(False)
-			self.manualControlDisable()
+			self.manualControlDisable()  # FIXME: takes long
 			self.countdownTimer.start()
 			self.sequence.setStatus('running')
 			self.btn_countdownStartStop.setText("Abort")
@@ -258,12 +258,11 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Reset and Save Log")
 			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-			time.sleep(1)  # FIXME: wait for servos to close valves
+			time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
 			self.servo_fuel.disable()
 			self.servo_oxidizer.disable()
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
-
 			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"  # TODO: move logging to own class
 			logfile_name_dir = 'log/'+logfile_name
 			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
@@ -292,8 +291,8 @@ class ECUI(QWidget):
 		voltageNew = self.hedgehog.get_analog(0x80) / 1000
 		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
 		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
-		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
-		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 		if self.igniter_pyro.getArmed() is not None:
 			if self.igniter_pyro.getArmed() is True:
 				self.checkbox_manualControlIgniter.setText("Igniter (Armed)")
@@ -301,14 +300,28 @@ class ECUI(QWidget):
 				self.checkbox_manualControlIgniter.setText("Igniter (Disarmed)")
 
 	def countdownEvent(self):
+		# abort if no ignition detected TODO: improve
+		# if self.countdownTimer.getTime() == 1.0:
+		# 	if self.pressureSensor_chamber.getValue() < 5.0:
+		# 		os.system("espeak \"auto abort\" &")
+		# 		self.countdownTimer.stop()
+		# 		self.sequence.setStatus('abort')
+		# 		self.label_countdownClock.setStyleSheet('color: #ff0000')
+		# 		self.btn_countdownStartStop.setText("Reset and Save Log")
+		# 		self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
+		# 		self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
+		# 		time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
+		# 		self.servo_fuel.disable()
+		# 		self.servo_oxidizer.disable()
+
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionTargetPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
-		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
@@ -344,7 +357,7 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setEnabled(False)
 		self.manualControlIgniterDisable()
 		self.countdownEvent()
-		time.sleep(1)  # FIXME: wait for servos to close valves
+		time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
 		self.servo_fuel.disable()
 		self.servo_oxidizer.disable()
 		self.btn_countdownStartStop.setEnabled(True)
@@ -375,12 +388,12 @@ class ECUI(QWidget):
 	def manualControlFuelChange(self):
 		print("Manuel Fuel Changed")
 		self.servo_fuel.setPositionTargetPercent(self.slider_manualControlFuel.value())
-		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent()))
+		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
 
 	def manualControlOxidizerChange(self):
 		print("Manuel Oxidizer Changed")
 		self.servo_oxidizer.setPositionTargetPercent(self.slider_manualControlOxidizer.value())
-		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent()))
+		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 
 	def calibrationEnable(self):
 		print("Calibration Mode Enabled")
