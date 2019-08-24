@@ -27,6 +27,8 @@ class PNID(QTabWidget):
 		print(w, h)
 		self.pnidLabel.setPixmap(self.pnidPixmap.scaled(w, h, Qt.KeepAspectRatio))
 
+	def
+
 if __name__ == '__main__':
 
 	import sys
@@ -44,5 +46,5 @@ if __name__ == '__main__':
 	mainWindow.show()
 
 	pnid.loadPNID("/Volumes/Data/markus/Programming/SpaceTeam/TXV_ECUI/pnid_v0.1.png")
-	
+
 	sys.exit(app.exec_())
