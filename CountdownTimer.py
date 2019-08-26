@@ -1,12 +1,15 @@
-from RepeatedTimer import RepeatedTimer
-
+from PyQt5.QtCore import QTimer
+import os
 
 class CountdownTimer(object):
         def __init__(self, callback, start, step, *args, **kwargs):
                 self.countdown_step = step
                 self.countdown_reset = start
 
-                self.rt = RepeatedTimer(self.countdown_step, self.__countdownTick)
+                self.timer = QTimer()
+                self.timer.setInterval(self.countdown_step * 1000)
+                self.timer.timeout.connect(self.__countdownTick)
+
                 self.countdownTime = self.countdown_reset
 
                 self.callback = callback
@@ -15,16 +18,23 @@ class CountdownTimer(object):
 
         def __countdownTick(self):
                 self.countdownTime = round(self.countdownTime + self.countdown_step, 1)
+                if abs(self.countdownTime - round(self.countdownTime, 0)) < 0.0001:
+                        number = round(self.countdownTime, 0)
+                        if number <= 0:
+                                text = '%d' % (round(-self.countdownTime, 0))
+                                print("Countdown: " + text)
+                                text = text.replace("0", "ignition")
+                                os.system("espeak " + text + " &")
                 self.callback(*self.args, **self.kwargs)
 
         def start(self):
-                self.rt.start()
+                self.timer.start()
 
         def stop(self):
-                self.rt.stop()
+                self.timer.stop()
 
         def reset(self):
-                self.rt.stop()
+                self.timer.stop()
                 self.countdownTime = self.countdown_reset
 
         def getTime(self):
