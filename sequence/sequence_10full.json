@@ -1,0 +1,38 @@
+[
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": -1000000
+    },
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": 0
+    },
+    {
+        "fuel": 100,
+        "igniter": 0,
+        "oxidizer": 100,
+        "timestamp": 0.5
+    },
+    {
+        "fuel": 100,
+        "igniter": 0,
+        "oxidizer": 100,
+        "timestamp": 10.0
+    },
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": 10.5
+    },
+    {
+        "fuel": 0,
+        "igniter": 0,
+        "oxidizer": 0,
+        "timestamp": 1000000
+    }
+]

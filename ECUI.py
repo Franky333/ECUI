@@ -3,6 +3,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 from SequenceMonitor import SequenceMonitor
+from Dashboard import Dashboard
 
 class ECUI(QWidget):
 
@@ -10,12 +11,19 @@ class ECUI(QWidget):
 		super(ECUI, self).__init__(parent)
 
 		#sequence Monitor
-		seqMonitor = SequenceMonitor(self)
+		self.seqMonitor = SequenceMonitor(self)
 
-		vLayout = QVBoxLayout()
-		vLayout.addWidget(seqMonitor)
+		self.dashboard = Dashboard()
 
-		self.setLayout(vLayout)
+
+		hLayout = QHBoxLayout()
+		hLayout.addWidget(self.dashboard)
+		hLayout.addWidget(self.seqMonitor)
+
+		self.setLayout(hLayout)
+
+	def cleanup():
+		self.dashboard.cleanup()
 
 
 if __name__ == '__main__':
@@ -24,12 +32,18 @@ if __name__ == '__main__':
 
 	app = QApplication(sys.argv)
 
+	ecui = ECUI()
+
 	mainWindow = QMainWindow()
-	mainWindow.setCentralWidget(ECUI())
+	mainWindow.setCentralWidget(ecui)
 	mainWindow.setMinimumSize(QSize(1280/2,1000))
 
 	mainWindow.setStyle(QStyleFactory.create("Macintosh"))
 
 	mainWindow.show()
 
-	sys.exit(app.exec_())
+	app = app.exec_()
+
+	ecui.cleanup()
+
+	sys.exit(app)
