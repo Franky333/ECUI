@@ -9,10 +9,10 @@ class Sequence(object):
 		# add endpoints and sort
 		self.sequence = sorted(self.sequence, key=lambda k: k['timestamp'])
 		if not self.sequence[0]['timestamp'] == -1000000:
-			self.sequence += [{'timestamp': -1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0}]
+			self.sequence += [{'timestamp': -1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0, 'chamberPressureMin': 0}]
 			print("added start endpoint to sequence")
 		if not self.sequence[self.sequence.__len__() - 1]['timestamp'] == 1000000:
-			self.sequence += [{'timestamp': 1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0}]
+			self.sequence += [{'timestamp': 1000000, 'fuel': 0, 'oxidizer': 0, 'igniter': 0, 'chamberPressureMin': 0}]
 			print("added end endpoint to sequence")
 		self.sequence = sorted(self.sequence, key=lambda k: k['timestamp'])
 
@@ -35,6 +35,9 @@ class Sequence(object):
 
 	def getIgniterList(self):
 		return self.__getListFromKey('igniter')
+
+	def getChamberPressureMinList(self):
+		return self.__getListFromKey('chamberPressureMin')
 
 	def getIndexTimeBelowOrEqual(self, time):
 		timestamps = self.getTimestampList()
@@ -86,6 +89,17 @@ class Sequence(object):
 			return igniter[index_belowOrEqual]
 		slope = ((igniter[index_above] - igniter[index_belowOrEqual]) / (timestamps[index_above] - timestamps[index_belowOrEqual]))
 		return igniter[index_belowOrEqual] + slope * (time - timestamps[index_belowOrEqual])
+
+	def getChamberPressureMinAtTime(self, time):
+		index_belowOrEqual = self.getIndexTimeBelowOrEqual(time)
+		index_above = self.getIndexTimeAbove(time)
+		timestamps = self.getTimestampList()
+		chamberPressureMin = self.getChamberPressureMinList()
+
+		if timestamps[index_belowOrEqual] == time:
+			return chamberPressureMin[index_belowOrEqual]
+		slope = ((chamberPressureMin[index_above] - chamberPressureMin[index_belowOrEqual]) / (timestamps[index_above] - timestamps[index_belowOrEqual]))
+		return chamberPressureMin[index_belowOrEqual] + slope * (time - timestamps[index_belowOrEqual])
 
 	def getSmallestTimestamp(self):
 		return self.getTimestampList()[1]

@@ -3,7 +3,7 @@ class SimulatedHedgehog(object):
 		pass
 
 	def get_analog(self, port):
-		return 0
+		return 700
 
 	def set_servo_raw(self, port, us):
 		if us is False:

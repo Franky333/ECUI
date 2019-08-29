@@ -26,6 +26,9 @@ class ECUI(QWidget):
 	def __init__(self, parent=None):
 		super(ECUI, self).__init__(parent)
 
+		# Settings
+		self.autoabortEnabled = True
+
 		# Hedgehog
 		self.stack = ExitStack()
 		#self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
@@ -307,8 +310,8 @@ class ECUI(QWidget):
 
 	def countdownEvent(self):
 		# abort if no ignition detected TODO: improve
-		if self.countdownTimer.getTime() == 1.0:
-			if self.pressureSensor_chamber.getValue() < 5.0:
+		if self.autoabortEnabled:
+			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()):
 				os.system("espeak \"auto abort\" &")
 				self.countdownTimer.stop()
 				self.sequence.setStatus('abort')
