@@ -1,5 +1,7 @@
 import json
 
+from PyQt5.QtCore import QTimer
+
 
 class Servo(object):
 	def __init__(self, name, hedgehog, servoPort, feedbackPort):
@@ -16,6 +18,11 @@ class Servo(object):
 		self.feedback_min = None
 		self.feedback_max = None
 
+		self.shutOffTimer = QTimer()
+		self.shutOffTimer.setInterval(3000)
+		self.shutOffTimer.setSingleShot(True)
+		self.shutOffTimer.timeout.connect(self.__shutOffTimerCallback)
+
 		self.loadSettings()
 
 		self.setPositionTargetPercent(0)
@@ -24,11 +31,13 @@ class Servo(object):
 		if not self.enabled:
 			self.enabled = True
 			self.hedgehog.set_servo_raw(self.servoPort, self.position_target_us * 2)
+			self.__shutoffTimerReset()
 
 	def disable(self):
 		if self.enabled:
 			self.enabled = False
 			self.hedgehog.set_servo_raw(self.servoPort, False)
+			self.shutOffTimer.stop()
 
 	def getEnabled(self):
 		return self.enabled
@@ -47,6 +56,7 @@ class Servo(object):
 			print("servo %s set to %dus" % (self.name, self.position_target_us))
 			if self.enabled:
 				self.hedgehog.set_servo_raw(self.servoPort, position_us*2)
+				self.__shutoffTimerReset()
 
 	def getPositionTargetUs(self):
 		return self.position_target_us
@@ -86,3 +96,11 @@ class Servo(object):
 		position_current_percent = (feedback - self.feedback_min) / feedback_span * 100
 		self.position_current_percent = round(position_current_percent, 0)
 		# self.position_current_percent = round(max(min(100, position_current_percent), 0), 0)  # TODO: use this?
+
+	def __shutoffTimerReset(self):
+		if self.shutOffTimer.isActive():
+			self.shutOffTimer.stop()
+		self.shutOffTimer.start()
+
+	def __shutOffTimerCallback(self):
+		self.hedgehog.set_servo_raw(self.servoPort, False)

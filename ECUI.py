@@ -28,10 +28,10 @@ class ECUI(QWidget):
 
 		# Hedgehog
 		self.stack = ExitStack()
-		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
+		#self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
 
 		# Simulated Hedgehog
-		#self.hedgehog = SimulatedHedgehog()
+		self.hedgehog = SimulatedHedgehog()
 
 		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
@@ -258,9 +258,6 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setText("Reset and Save Log")
 			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-			time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
-			self.servo_fuel.disable()
-			self.servo_oxidizer.disable()
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
 			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"  # TODO: move logging to own class
@@ -319,9 +316,6 @@ class ECUI(QWidget):
 				self.btn_countdownStartStop.setText("Reset and Save Log")
 				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 				self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-				#time.sleep(3)  # FIXME: wait for servos to close valves, this also delays everything above
-				#self.servo_fuel.disable()
-				#self.servo_oxidizer.disable()
 
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
@@ -366,9 +360,6 @@ class ECUI(QWidget):
 		self.slider_manualControlOxidizer.setEnabled(False)
 		self.manualControlIgniterDisable()
 		self.countdownEvent()
-		time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
-		self.servo_fuel.disable()
-		self.servo_oxidizer.disable()
 		self.btn_countdownStartStop.setEnabled(True)
 		self.checkbox_calibration.setEnabled(True)
 
@@ -395,12 +386,10 @@ class ECUI(QWidget):
 			self.manualControlIgniterDisable()
 
 	def manualControlFuelChange(self):
-		print("Manuel Fuel Changed")
 		self.servo_fuel.setPositionTargetPercent(self.slider_manualControlFuel.value())
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
 
 	def manualControlOxidizerChange(self):
-		print("Manuel Oxidizer Changed")
 		self.servo_oxidizer.setPositionTargetPercent(self.slider_manualControlOxidizer.value())
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 
@@ -429,9 +418,6 @@ class ECUI(QWidget):
 		self.btn_cal_oxidizer_min.setEnabled(False)
 		self.btn_cal_oxidizer_max.setEnabled(False)
 		self.countdownEvent()
-		time.sleep(1)  # FIXME: wait for servos to close valves
-		self.servo_fuel.disable()
-		self.servo_oxidizer.disable()
 		self.btn_countdownStartStop.setEnabled(True)
 		self.checkbox_manualControl.setEnabled(True)
 
