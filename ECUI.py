@@ -242,9 +242,9 @@ class ECUI(QWidget):
 	def countdownStartStopReset(self):
 		if self.btn_countdownStartStop.text() == "Start":
 			self.checkbox_calibration.setEnabled(False)
-			self.calibrationDisable()  # FIXME: takes long
+			self.calibrationDisable()
 			self.checkbox_manualControl.setEnabled(False)
-			self.manualControlDisable()  # FIXME: takes long
+			self.manualControlDisable()
 			self.countdownTimer.start()
 			self.sequence.setStatus('running')
 			self.btn_countdownStartStop.setText("Abort")
@@ -303,10 +303,6 @@ class ECUI(QWidget):
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 
-		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
-		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
-
 		if self.igniter_pyro.getArmed() is not None:
 			if self.igniter_pyro.getArmed() is True:
 				self.checkbox_manualControlIgniter.setText("Igniter (Armed)")
@@ -327,6 +323,7 @@ class ECUI(QWidget):
 				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
 				self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
+		# outputs set values
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
 		self.servo_oxidizer.setPositionTargetPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
@@ -334,6 +331,12 @@ class ECUI(QWidget):
 		self.igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
+		# update ui
+		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
+		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
+
+		# sensors get values
 		self.loggingValues.append({'Timestamp': self.countdownTimer.getTime(),
 		                           'ServoFuelPercentageTarget': self.servo_fuel.getPositionTargetPercent(),
 		                           'ServoOxidizerPercentageTarget': self.servo_oxidizer.getPositionTargetPercent(),
