@@ -3,6 +3,10 @@ class PressureSensor(object):
 		self.name = name
 		self.hedgehog = hedgehog
 		self.port = port
+		self.value = 0
 
 	def getValue(self):
-		return (self.hedgehog.get_analog(self.port) - 621) * 0.0141
+		return self.value
+
+	def updateValue(self):
+		self.value = (self.hedgehog.get_analog(self.port) - 621) * 0.0141

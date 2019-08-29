@@ -5,6 +5,7 @@ class Igniter(object):
 		self.igniterPort = igniterPort
 		self.feedbackPort = feedbackPort
 		self.enabled = False
+		self.armed = None
 
 	def set(self, enabled):
 		if enabled and not self.enabled:
@@ -20,7 +21,10 @@ class Igniter(object):
 		return self.enabled
 
 	def getArmed(self):
+		return self.armed
+
+	def updateArmed(self):
 		if self.feedbackPort is None:
-			return None
+			self.armed = None
 		else:
-			return self.hedgehog.get_analog(self.feedbackPort) < 2000
+			self.armed = self.hedgehog.get_analog(self.feedbackPort) < 2000

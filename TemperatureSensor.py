@@ -3,6 +3,10 @@ class TemperatureSensor(object):
 		self.name = name
 		self.hedgehog = hedgehog
 		self.port = port
+		self.value = 0
 
 	def getValue(self):
-		return (self.hedgehog.get_analog(self.port) - 384) * 0.18
+		return self.value
+
+	def updateValue(self):
+		self.value = (self.hedgehog.get_analog(self.port) - 384) * 0.18

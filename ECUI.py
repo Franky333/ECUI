@@ -288,9 +288,18 @@ class ECUI(QWidget):
 			print("Error: invalid button state")
 
 	def __timerTick(self):
+		self.servo_fuel.updatePositionCurrentPercent()
+		self.servo_oxidizer.updatePositionCurrentPercent()
+		self.igniter_pyro.updateArmed()
+		self.pressureSensor_fuel.updateValue()
+		self.pressureSensor_oxidizer.updateValue()
+		self.pressureSensor_chamber.updateValue()
+		self.temperatureSensor_chamber.updateValue()
+
 		voltageNew = self.hedgehog.get_analog(0x80) / 1000
 		self.inputVoltage = self.inputVoltage * 0.6 + voltageNew * 0.4
 		self.label_inputVoltage.setText("Input Voltage: %.1fV" % self.inputVoltage)
+
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
 		if self.igniter_pyro.getArmed() is not None:
@@ -301,18 +310,18 @@ class ECUI(QWidget):
 
 	def countdownEvent(self):
 		# abort if no ignition detected TODO: improve
-		# if self.countdownTimer.getTime() == 1.0:
-		# 	if self.pressureSensor_chamber.getValue() < 5.0:
-		# 		os.system("espeak \"auto abort\" &")
-		# 		self.countdownTimer.stop()
-		# 		self.sequence.setStatus('abort')
-		# 		self.label_countdownClock.setStyleSheet('color: #ff0000')
-		# 		self.btn_countdownStartStop.setText("Reset and Save Log")
-		# 		self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
-		# 		self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
-		# 		time.sleep(1)  # FIXME: wait for servos to close valves, this also delays everything above
-		# 		self.servo_fuel.disable()
-		# 		self.servo_oxidizer.disable()
+		if self.countdownTimer.getTime() == 1.0:
+			if self.pressureSensor_chamber.getValue() < 5.0:
+				os.system("espeak \"auto abort\" &")
+				self.countdownTimer.stop()
+				self.sequence.setStatus('abort')
+				self.label_countdownClock.setStyleSheet('color: #ff0000')
+				self.btn_countdownStartStop.setText("Reset and Save Log")
+				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
+				self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
+				#time.sleep(3)  # FIXME: wait for servos to close valves, this also delays everything above
+				#self.servo_fuel.disable()
+				#self.servo_oxidizer.disable()
 
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
 		self.servo_fuel.setPositionTargetPercent(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))

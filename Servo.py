@@ -10,7 +10,7 @@ class Servo(object):
 		self.enabled = False
 		self.position_target_percent = None
 		self.position_target_us = None
-		self.position_current_percent = None
+		self.position_current_percent = 0
 		self.us_min = None
 		self.us_max = None
 		self.feedback_min = None
@@ -52,11 +52,6 @@ class Servo(object):
 		return self.position_target_us
 
 	def getPositionCurrentPercent(self):
-		feedback = self.hedgehog.get_analog(self.feedbackPort)
-		feedback_span = (self.feedback_max - self.feedback_min)
-		position_current_percent = (feedback - self.feedback_min) / feedback_span * 100
-		self.position_current_percent = round(position_current_percent, 0)
-		#self.position_current_percent = round(max(min(100, position_current_percent), 0), 0)  # TODO: use this?
 		return self.position_current_percent
 
 	def calMin(self):
@@ -84,3 +79,10 @@ class Servo(object):
 		print("loading settings for servo \"" + self.name + "\" from file")
 		with open('config/servo_' + self.name + '.json', 'r') as f:
 			(self.us_min, self.us_max, self.feedback_min, self.feedback_max) = json.load(f)
+
+	def updatePositionCurrentPercent(self):
+		feedback = self.hedgehog.get_analog(self.feedbackPort)
+		feedback_span = (self.feedback_max - self.feedback_min)
+		position_current_percent = (feedback - self.feedback_min) / feedback_span * 100
+		self.position_current_percent = round(position_current_percent, 0)
+		# self.position_current_percent = round(max(min(100, position_current_percent), 0), 0)  # TODO: use this?
