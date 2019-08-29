@@ -302,11 +302,18 @@ class ECUI(QWidget):
 
 		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
 		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
+
+		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
+		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
+		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
+
 		if self.igniter_pyro.getArmed() is not None:
 			if self.igniter_pyro.getArmed() is True:
 				self.checkbox_manualControlIgniter.setText("Igniter (Armed)")
 			else:
 				self.checkbox_manualControlIgniter.setText("Igniter (Disarmed)")
+		else:
+			self.checkbox_manualControlIgniter.setText("Igniter (Unknown)")
 
 	def countdownEvent(self):
 		# abort if no ignition detected TODO: improve
@@ -325,11 +332,6 @@ class ECUI(QWidget):
 		self.servo_oxidizer.setPositionTargetPercent(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.igniter_arc.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
 		self.igniter_pyro.set(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.checkbox_manualControlIgniter.setChecked(self.sequence.getIgniterAtTime(self.countdownTimer.getTime()))
-		self.label_manualControlFuel.setText("Fuel Target: %3d%%   Fuel Currently: %3d%%   Fuel Pressure: %2.1fbar" % (self.servo_fuel.getPositionTargetPercent(), self.servo_fuel.getPositionCurrentPercent(), self.pressureSensor_fuel.getValue()))
-		self.label_manualControlOxidizer.setText("Oxidizer Target: %3d%%   Oxidizer Currently: %3d%%   Oxidizer Pressure: %2.1fbar" % (self.servo_oxidizer.getPositionTargetPercent(), self.servo_oxidizer.getPositionCurrentPercent(), self.pressureSensor_oxidizer.getValue()))
-		self.slider_manualControlFuel.setValue(self.sequence.getFuelAtTime(self.countdownTimer.getTime()))
-		self.slider_manualControlOxidizer.setValue(self.sequence.getOxidizerAtTime(self.countdownTimer.getTime()))
 		self.sequencePlot.redrawMarkers()
 
 		self.loggingValues.append({'Timestamp': self.countdownTimer.getTime(),
