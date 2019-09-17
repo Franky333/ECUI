@@ -4,6 +4,15 @@ from PyQt5.QtWidgets import *
 
 import json
 
+from hedgehog.client import connect
+from contextlib import ExitStack
+from SimulatedHedgehog import SimulatedHedgehog
+
+from Igniter import Igniter
+from Servo import Servo
+from PressureSensor import PressureSensor
+from TemperatureSensor import TemperatureSensor
+
 from SequenceList import SequenceList
 from SequenceListItem import SequenceListItem
 from SequenceController import SequenceController
@@ -16,6 +25,24 @@ class SequenceMonitor(QWidget):
 
 	def __init__(self, parent=None):
 		super(SequenceMonitor, self).__init__(parent)
+
+		# Hedgehog
+		#self.stack = ExitStack()
+		#self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
+
+		# Simulated Hedgehog
+		self.hedgehog = SimulatedHedgehog()
+
+		# Actuators and Sensors
+		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
+		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
+		self.igniter_arc = Igniter(name='arc', hedgehog=self.hedgehog, igniterPort=0)
+		self.igniter_pyro = Igniter(name='pyro', hedgehog=self.hedgehog, igniterPort=1, feedbackPort=7)
+		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=2)
+		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=3)
+		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=4)
+		self.temperatureSensor_chamber = TemperatureSensor(name='chamber', hedgehog=self.hedgehog, port=8)
+
 
 		self.controller = SequenceController()
 		self.parent = parent
@@ -333,6 +360,8 @@ class SequenceMonitor(QWidget):
 			self.toggleSequenceButton.setText("Abort Sequence")
 			self.timer = CountdownTimer(self._countdownEvent, self.getStartTime(), 0.1)
 			self.timer.start()
+			self.servo_fuel.enable()
+			self.servo_oxidizer.enable()
 		else:
 			self.isSequenceStarted = False
 			self._resetTimer()
@@ -342,8 +371,27 @@ class SequenceMonitor(QWidget):
 		time = self.timer.getTime()
 		self.listWidget.highlightTimestamp(time)
 		self.countDownTimer.setText(str(time))
+
 		if time >= self.getEndTime():
 			self._resetTimer()
+		else:
+			timestamp = self.listWidget.getTimestampSlot(time)
+			self._execActions(timestamp)
+
+	def _execActions(self, timestamp):
+
+		for entry in self.controller.getData():
+			currTimestamp = entry["timestamp"]
+			
+			if currTimestamp == timestamp:
+				actions = entry["actions"]
+				if "fuel" in actions:
+					self.servo_fuel.setPositionTargetPercent(actions["fuel"])
+				if "oxidizer" in actions:
+					self.servo_oxidizer.setPositionTargetPercent(actions["oxidizer"])
+				if "igniter" in actions:
+					self.igniter_arc.set(actions["igniter"])
+					self.igniter_pyro.set(actions["igniter"])
 
 	def _resetTimer(self):
 		self.timer.stop()

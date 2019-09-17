@@ -27,7 +27,6 @@ class PNID(QTabWidget):
 		print(w, h)
 		self.pnidLabel.setPixmap(self.pnidPixmap.scaled(w, h, Qt.KeepAspectRatio))
 
-	def
 
 if __name__ == '__main__':
 

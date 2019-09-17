@@ -28,7 +28,7 @@ class Dashboard(QWidget):
 		super(Dashboard, self).__init__(parent)
 
 		# Hedgehog
-		self.stack = ExitStack()
+		#self.stack = ExitStack()
 		#self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
 
 		# Simulated Hedgehog
