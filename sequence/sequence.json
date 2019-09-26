@@ -15,8 +15,15 @@
     },
     {
         "chamberPressureMin": -1,
-        "fuel": 20,
+        "fuel": 10,
         "igniter": 0,
+        "oxidizer": 10,
+        "timestamp": 0.1
+    },
+    {
+        "chamberPressureMin": -1,
+        "fuel": 20,
+        "igniter": 100,
         "oxidizer": 20,
         "timestamp": 0.2
     },

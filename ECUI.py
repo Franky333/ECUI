@@ -61,7 +61,7 @@ class ECUI(QWidget):
 
 		self.inputVoltage = 0.0
 
-		self.set_safe = False
+		self.set_safe = True
 		self.set_igniter = False
 
 		self.loggingValues = []
@@ -348,12 +348,19 @@ class ECUI(QWidget):
 					if self.pressureSensor_oxidizer.getValue() < 0.3:
 						self.socket_neo(b'SafeOn')
 						self.set_safe = True
-					if self.pressureSensor_oxidizer.getValue() > 10:
+					if self.pressureSensor_oxidizer.getValue() > 2:
 						self.socket_neo(b'NoConn')
 						self.set_safe = False
 					self.set_igniter = False
 		else:
 			self.checkbox_manualControlIgniter.setText("Igniter (Unknown)")
+
+		if not self.set_safe and self.pressureSensor_oxidizer.getValue() < 0.3:
+				self.socket_neo(b'SafeOn')
+				self.set_safe = True
+		if self.set_safe and self.pressureSensor_oxidizer.getValue() > 2:
+				self.socket_neo(b'NoConn')
+				self.set_safe = False
 
 	def countdownEvent(self):
 		# abort if no ignition detected TODO: improve
@@ -401,12 +408,6 @@ class ECUI(QWidget):
 		                           'PressureOxidizer': self.pressureSensor_oxidizer.getValue(),
 		                           'PressureChamber': self.pressureSensor_chamber.getValue(),
 		                           'TemperatureChamber': self.temperatureSensor_chamber.getValue()})
-		if not self.set_safe and self.pressureSensor_oxidizer.getValue() < 0.3:
-				self.socket_neo(b'SafeOn')
-				self.set_safe = True
-		if self.set_safe and self.pressureSensor_oxidizer.getValue() > 10:
-				self.socket_neo(b'NoConn')
-				self.set_safe = False
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
 		self.checkbox_manualControl.setChecked(True)
