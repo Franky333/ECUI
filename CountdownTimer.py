@@ -24,7 +24,7 @@ class CountdownTimer(object):
 				text = '%d' % (round(-self.countdownTime, 0))
 				print("Countdown: " + text)
 				text = text.replace("0", "ignition")
-				os.system("espeak " + text + " &")
+				os.system("espeak -v en+f3 '" + text + "' &")
 		self.callback(*self.args, **self.kwargs)
 
 	def start(self):

@@ -254,7 +254,23 @@ class ECUI(QWidget):
 			self.servo_oxidizer.enable()
 
 		elif self.btn_countdownStartStop.text() == "Abort":
+			if self.countdownTimer.getTime() < 0 :
+				self.countdownTimer.stop()
+				self.btn_countdownStartStop.setText("Reset and Save Log")
+				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
+				os.system("espeak -v en+f3 \"hold\" &")
+			else:
+				self.btn_countdownStartStop.setText("Stop")
+				self.btn_countdownStartStop.setToolTip("Stop logging")
+				os.system("espeak -v en+f3 \"abort\" &")
+			self.sequence.setStatus('abort')
+			self.countdownEvent()
+			self.label_countdownClock.setStyleSheet('color: #ff0000')
+			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
+
+		elif self.btn_countdownStartStop.text() == "Stop":
 			self.countdownTimer.stop()  # TODO: make timer continue
+			os.system("espeak -v en+f3 \"stopped logging\" &")
 			self.sequence.setStatus('abort')
 			self.countdownEvent()
 			self.label_countdownClock.setStyleSheet('color: #ff0000')
@@ -315,13 +331,23 @@ class ECUI(QWidget):
 		# abort if no ignition detected TODO: improve
 		if self.autoabortEnabled:
 			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()):
-				os.system("espeak \"auto abort\" &")
-				self.countdownTimer.stop()  # TODO: make timer continue
+				os.system("espeak -v en+f3 \"auto abort\" &")
+				#self.countdownTimer.stop()  # TODO: make timer continue
 				self.sequence.setStatus('abort')
 				self.label_countdownClock.setStyleSheet('color: #ff0000')
-				self.btn_countdownStartStop.setText("Reset and Save Log")
-				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
+				self.btn_countdownStartStop.setText("Stop")
+				self.btn_countdownStartStop.setToolTip("Stop logging")
 				self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
+
+		if self.countdownTimer.getTime() > 3+self.sequence.getTimestampList()[len(self.sequence.getTimestampList())-2] and (self.btn_countdownStartStop.text() == "Abort" or self.btn_countdownStartStop.text() == "Stop") and self.servo_fuel.getPositionTargetPercent() == 0 and self.servo_oxidizer.getPositionTargetPercent() == 0: #Yes I hate myself for this crude fix
+			self.btn_countdownStartStop.setText("Reset and Save Log")
+			os.system("espeak -v en+f3 \"sequence finished\" &")
+			self.countdownTimer.stop()
+			self.sequence.setStatus('abort')
+			self.countdownEvent()
+			self.label_countdownClock.setStyleSheet('color: #ff0000')
+			self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
+			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
 		# outputs set values
 		self.label_countdownClock.setText(self.countdownTimer.getTimeString())
