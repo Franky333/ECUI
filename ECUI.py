@@ -21,6 +21,7 @@ from Servo import Servo
 from PressureSensor import PressureSensor
 from TemperatureSensor import TemperatureSensor
 
+import socket
 
 class ECUI(QWidget):
 	def __init__(self, parent=None):
@@ -35,6 +36,9 @@ class ECUI(QWidget):
 
 		# Simulated Hedgehog
 		#self.hedgehog = SimulatedHedgehog()
+
+		#Neopixel test
+		self.socket_neo(b'SafeOn')
 
 		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
@@ -56,6 +60,9 @@ class ECUI(QWidget):
 		self.timer.timeout.connect(self.__timerTick)
 
 		self.inputVoltage = 0.0
+
+		self.set_safe = False
+		self.set_igniter = False
 
 		self.loggingValues = []
 
@@ -219,6 +226,13 @@ class ECUI(QWidget):
 		#Timer
 		self.timer.start()
 
+	def socket_neo(self, string):
+		#Socket for neopixel
+		self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.clientsocket.connect(('raspberrypi.local', 25565))
+		self.clientsocket.send(string)
+		self.clientsocket.close()
+
 	def closeEvent(self, event):
 		if self.btn_countdownStartStop.text() == "Abort":
 			reply = QMessageBox.question(self, 'Message', "The countdown is running.\nQuit anyways?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -241,6 +255,7 @@ class ECUI(QWidget):
 
 	def countdownStartStopReset(self):
 		if self.btn_countdownStartStop.text() == "Start":
+			self.socket_neo(b'Testing')
 			self.checkbox_calibration.setEnabled(False)
 			self.calibrationDisable()
 			self.checkbox_manualControl.setEnabled(False)
@@ -254,6 +269,7 @@ class ECUI(QWidget):
 			self.servo_oxidizer.enable()
 
 		elif self.btn_countdownStartStop.text() == "Abort":
+			self.socket_neo(b'Error')
 			if self.countdownTimer.getTime() < 0 :
 				self.countdownTimer.stop()
 				self.btn_countdownStartStop.setText("Reset and Save Log")
@@ -269,7 +285,7 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
 		elif self.btn_countdownStartStop.text() == "Stop":
-			self.countdownTimer.stop()  # TODO: make timer continue
+			self.countdownTimer.stop()
 			os.system("espeak -v en+f3 \"stopped logging\" &")
 			self.sequence.setStatus('abort')
 			self.countdownEvent()
@@ -279,6 +295,7 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
+			self.set_safe = False
 			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"  # TODO: move logging to own class
 			logfile_name_dir = 'log/'+logfile_name
 			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
@@ -322,8 +339,19 @@ class ECUI(QWidget):
 		if self.igniter_pyro.getArmed() is not None:
 			if self.igniter_pyro.getArmed() is True:
 				self.checkbox_manualControlIgniter.setText("Igniter (Armed)")
+				if not self.set_igniter:
+					self.socket_neo(b'Error')
+					self.set_igniter = True
 			else:
 				self.checkbox_manualControlIgniter.setText("Igniter (Disarmed)")
+				if self.set_igniter:
+					if self.pressureSensor_oxidizer.getValue() < 0.3:
+						self.socket_neo(b'SafeOn')
+						self.set_safe = True
+					if self.pressureSensor_oxidizer.getValue() > 10:
+						self.socket_neo(b'NoConn')
+						self.set_safe = False
+					self.set_igniter = False
 		else:
 			self.checkbox_manualControlIgniter.setText("Igniter (Unknown)")
 
@@ -331,6 +359,7 @@ class ECUI(QWidget):
 		# abort if no ignition detected TODO: improve
 		if self.autoabortEnabled:
 			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()) and not self.btn_countdownStartStop.text() == "Stop":
+				self.socket_neo(b'Error')
 				self.btn_countdownStartStop.setText("Stop")
 				os.system("espeak -v en+f3 \"auto abort\" &")
 				#self.countdownTimer.stop()  # TODO: make timer continue
@@ -372,7 +401,12 @@ class ECUI(QWidget):
 		                           'PressureOxidizer': self.pressureSensor_oxidizer.getValue(),
 		                           'PressureChamber': self.pressureSensor_chamber.getValue(),
 		                           'TemperatureChamber': self.temperatureSensor_chamber.getValue()})
-
+		if not self.set_safe and self.pressureSensor_oxidizer.getValue() < 0.3:
+				self.socket_neo(b'SafeOn')
+				self.set_safe = True
+		if self.set_safe and self.pressureSensor_oxidizer.getValue() > 10:
+				self.socket_neo(b'NoConn')
+				self.set_safe = False
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
 		self.checkbox_manualControl.setChecked(True)
