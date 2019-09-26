@@ -31,10 +31,10 @@ class ECUI(QWidget):
 
 		# Hedgehog
 		self.stack = ExitStack()
-		#self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
+		self.hedgehog = self.stack.enter_context(connect(endpoint='tcp://raspberrypi.local:10789'))  # FIXME
 
 		# Simulated Hedgehog
-		self.hedgehog = SimulatedHedgehog()
+		#self.hedgehog = SimulatedHedgehog()
 
 		# Actuators and Sensors
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
@@ -254,7 +254,7 @@ class ECUI(QWidget):
 			self.servo_oxidizer.enable()
 
 		elif self.btn_countdownStartStop.text() == "Abort":
-			self.countdownTimer.stop()
+			self.countdownTimer.stop()  # TODO: make timer continue
 			self.sequence.setStatus('abort')
 			self.countdownEvent()
 			self.label_countdownClock.setStyleSheet('color: #ff0000')
@@ -287,7 +287,7 @@ class ECUI(QWidget):
 		else:
 			print("Error: invalid button state")
 
-	def __timerTick(self):
+	def __timerTick(self):  # FIXME: bc of the hedgehog commands this often takes longer than 100ms, slowing down the countdown
 		self.servo_fuel.updatePositionCurrentPercent()
 		self.servo_oxidizer.updatePositionCurrentPercent()
 		self.igniter_pyro.updateArmed()
@@ -316,7 +316,7 @@ class ECUI(QWidget):
 		if self.autoabortEnabled:
 			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()):
 				os.system("espeak \"auto abort\" &")
-				self.countdownTimer.stop()
+				self.countdownTimer.stop()  # TODO: make timer continue
 				self.sequence.setStatus('abort')
 				self.label_countdownClock.setStyleSheet('color: #ff0000')
 				self.btn_countdownStartStop.setText("Reset and Save Log")
