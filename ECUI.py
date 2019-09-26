@@ -258,7 +258,7 @@ class ECUI(QWidget):
 				self.countdownTimer.stop()
 				self.btn_countdownStartStop.setText("Reset and Save Log")
 				self.btn_countdownStartStop.setToolTip("Reset the countdown and save logging data to a file")
-				os.system("espeak -v en+f3 \"hold\" &")
+				os.system("espeak -v en+f3 \"hold, hold, hold\" &")
 			else:
 				self.btn_countdownStartStop.setText("Stop")
 				self.btn_countdownStartStop.setToolTip("Stop logging")
@@ -330,12 +330,12 @@ class ECUI(QWidget):
 	def countdownEvent(self):
 		# abort if no ignition detected TODO: improve
 		if self.autoabortEnabled:
-			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()):
+			if self.pressureSensor_chamber.getValue() < self.sequence.getChamberPressureMinAtTime(self.countdownTimer.getTime()) and not self.btn_countdownStartStop.text() == "Stop":
+				self.btn_countdownStartStop.setText("Stop")
 				os.system("espeak -v en+f3 \"auto abort\" &")
 				#self.countdownTimer.stop()  # TODO: make timer continue
 				self.sequence.setStatus('abort')
 				self.label_countdownClock.setStyleSheet('color: #ff0000')
-				self.btn_countdownStartStop.setText("Stop")
 				self.btn_countdownStartStop.setToolTip("Stop logging")
 				self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
