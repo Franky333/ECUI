@@ -22,6 +22,7 @@ from PressureSensor import PressureSensor
 from TemperatureSensor import TemperatureSensor
 
 import socket
+from StrainData import StrainData
 
 class ECUI(QWidget):
 	def __init__(self, parent=None):
@@ -36,6 +37,9 @@ class ECUI(QWidget):
 
 		# Simulated Hedgehog
 		#self.hedgehog = SimulatedHedgehog()
+
+		#Strain data received
+		self.measure = StrainData()
 
 		#Neopixel test
 		self.socket_neo(b'SafeOn')
@@ -300,7 +304,7 @@ class ECUI(QWidget):
 			logfile_name_dir = 'log/'+logfile_name
 			os.makedirs(os.path.dirname(logfile_name_dir), exist_ok=True)  # generate log directory if non existent
 			with open(logfile_name_dir, 'w', newline='') as logfile:
-				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureChamber']
+				fieldnames = ['Timestamp', 'ServoFuelPercentageTarget', 'ServoOxidizerPercentageTarget', 'ServoFuelPercentageCurrent', 'ServoOxidizerPercentageCurrent', 'PressureFuel', 'PressureOxidizer', 'PressureChamber', 'TemperatureChamber', 'Strain_data']
 				writer = csv.DictWriter(logfile, fieldnames=fieldnames)
 				writer.writeheader()
 				for line in self.loggingValues:
@@ -407,7 +411,8 @@ class ECUI(QWidget):
 		                           'PressureFuel': self.pressureSensor_fuel.getValue(),
 		                           'PressureOxidizer': self.pressureSensor_oxidizer.getValue(),
 		                           'PressureChamber': self.pressureSensor_chamber.getValue(),
-		                           'TemperatureChamber': self.temperatureSensor_chamber.getValue()})
+		                           'TemperatureChamber': self.temperatureSensor_chamber.getValue(),
+                                           'Strain_data': self.measure.read_data()})
 	def manualControlEnable(self):
 		print("Manual Control Enabled")
 		self.checkbox_manualControl.setChecked(True)
