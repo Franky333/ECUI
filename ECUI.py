@@ -48,11 +48,11 @@ class ECUI(QWidget):
 		self.servo_fuel = Servo(name='fuel', hedgehog=self.hedgehog, servoPort=0, feedbackPort=0)
 		self.servo_oxidizer = Servo(name='oxidizer', hedgehog=self.hedgehog, servoPort=1, feedbackPort=1)
 		self.igniter_arc = Igniter(name='arc', hedgehog=self.hedgehog, igniterPort=0)
-		self.igniter_pyro = Igniter(name='pyro', hedgehog=self.hedgehog, igniterPort=1, feedbackPort=7)
-		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=2)
-		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=3)
-		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=4)
-		self.temperatureSensor_chamber = TemperatureSensor(name='chamber', hedgehog=self.hedgehog, port=8)
+		self.igniter_pyro = Igniter(name='pyro', hedgehog=self.hedgehog, igniterPort=1, feedbackPort=2)
+		self.pressureSensor_fuel = PressureSensor(name='fuel', hedgehog=self.hedgehog, port=8)
+		self.pressureSensor_oxidizer = PressureSensor(name='oxidizer', hedgehog=self.hedgehog, port=9)
+		self.pressureSensor_chamber = PressureSensor(name='chamber', hedgehog=self.hedgehog, port=10)
+		self.temperatureSensor_chamber = TemperatureSensor(name='chamber', hedgehog=self.hedgehog, port=11)
 
 		# Countdown Timer and Sequence
 		self.countdownTimer = CountdownTimer(self.countdownEvent)
