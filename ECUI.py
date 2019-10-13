@@ -29,7 +29,7 @@ class ECUI(QWidget):
 		super(ECUI, self).__init__(parent)
 
 		# Settings
-		self.autoabortEnabled = False
+		self.autoabortEnabled = True
 
 		# Hedgehog
 		self.stack = ExitStack()
@@ -298,6 +298,7 @@ class ECUI(QWidget):
 			self.btn_countdownStartStop.setStyleSheet('background-color: #EEEEEE;')
 
 		elif self.btn_countdownStartStop.text() == "Reset and Save Log":
+			self.socket_neo(b'NoConn')
 			self.set_safe = False
 			logfile_name = f"{datetime.datetime.now():%Y%m%d_%H%M%S}.csv"  # TODO: move logging to own class
 			logfile_name_dir = 'log/'+logfile_name
@@ -348,20 +349,20 @@ class ECUI(QWidget):
 			else:
 				self.checkbox_manualControlIgniter.setText("Igniter (Disarmed)")
 				if self.set_igniter:
-					if self.pressureSensor_oxidizer.getValue() < 0.5 and self.pressureSensor_fuel.getValue() < 0.5:
+					if (not self.set_safe) and (self.pressureSensor_oxidizer.getValue() < 0.5 and self.pressureSensor_fuel.getValue() < 0.5):
 						self.socket_neo(b'SafeOn')
 						self.set_safe = True
-					if self.pressureSensor_oxidizer.getValue() > 2 and self.pressureSensor_fuel.getValue() > 2:
+					if self.set_safe and (self.pressureSensor_oxidizer.getValue() > 2 and self.pressureSensor_fuel.getValue() > 2):
 						self.socket_neo(b'NoConn')
 						self.set_safe = False
 					self.set_igniter = False
 		else:
 			self.checkbox_manualControlIgniter.setText("Igniter (Unknown)")
 
-		if not self.set_safe and self.pressureSensor_oxidizer.getValue() < 0.5 and self.pressureSensor_fuel.getValue() < 0.5:
+		if (not self.set_safe) and (self.pressureSensor_oxidizer.getValue() < 0.5 and self.pressureSensor_fuel.getValue() < 0.5):
 				self.socket_neo(b'SafeOn')
 				self.set_safe = True
-		if self.set_safe and self.pressureSensor_oxidizer.getValue() > 2 or self.pressureSensor_fuel.getValue() > 2:
+		if self.set_safe and (self.pressureSensor_oxidizer.getValue() > 2 or self.pressureSensor_fuel.getValue() > 2):
 				self.socket_neo(b'NoConn')
 				self.set_safe = False
 
