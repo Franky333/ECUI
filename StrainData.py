@@ -14,6 +14,7 @@ class StrainData:
 		self.s.send(b'100')
 		return self.s.recv(24)
 
+#if __name__ == "__main__":
 # datarecv = strain_data()
 # while 1:
 #	time.sleep(0.01)
